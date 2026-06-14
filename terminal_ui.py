@@ -1239,9 +1239,18 @@ class PCToolkit:
 
         print("\033[?25l", end="", flush=True)  # hide cursor
         try:
+            # We must clear the screen once BEFORE the loop so any previous scan_effect
+            # that might have scrolled the viewport is erased, ensuring \033[1;1H is safe.
+            if os.name == "nt":
+                os.system("cls")
+            else:
+                clear()
+                
             while True:
                 term_lines = shutil.get_terminal_size((80, 24)).lines
-                max_rows = max(5, term_lines - 18)
+                # banner(11) + context(3) + panel_overhead(7) + "đang xem"(1) = 22 lines.
+                # Subtract 23 to leave a 1-line safe margin at the bottom.
+                max_rows = max(3, term_lines - 23)
 
                 if selected < start_idx:
                     start_idx = selected
