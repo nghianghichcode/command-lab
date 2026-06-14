@@ -22,7 +22,10 @@ if (-not $alreadyInstalled) {
 
 Write-Host ""
 Write-Host "Open a new terminal, then run:"
-Write-Host "  cmdlab"
+Write-Host "  pctool"
 Write-Host ""
-Write-Host "To launch it in a new Windows Terminal window, run:"
-Write-Host "  cmdlab-window"
+Write-Host "To launch it in a new terminal window, run:"
+Write-Host "  pctool-window"
+Write-Host ""
+Write-Host "Legacy aliases still work:"
+Write-Host "  cmdlab"

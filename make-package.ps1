@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist = Join-Path $root "dist"
 $zipPath = Join-Path $dist "command-lab.zip"
-$packageDir = Join-Path $dist "package"
-$appBuildDir = Join-Path $root "build\exe\cmdlab"
-$exePath = Join-Path $appBuildDir "cmdlab.exe"
+$packageDir = Join-Path $dist ("package-" + [guid]::NewGuid().ToString("N"))
+$appBuildDir = Join-Path $root "build\exe\pctool"
+$exePath = Join-Path $appBuildDir "pctool.exe"
 
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
@@ -15,14 +15,12 @@ if (Test-Path $zipPath) {
 
 & powershell -ExecutionPolicy Bypass -File (Join-Path $root "build-exe.ps1")
 
-if (Test-Path $packageDir) {
-    Remove-Item -Recurse -Force $packageDir
-}
-
 New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
 $files = @(
     "terminal_ui.py",
+    "pctool.cmd",
+    "pctool-window.cmd",
     "cmdlab.cmd",
     "cmdlab-window.cmd",
     "run.cmd",
@@ -37,7 +35,14 @@ foreach ($file in $files) {
 
 Copy-Item -Recurse -Force -Path (Join-Path $appBuildDir "*") -Destination $packageDir
 
-Compress-Archive -Path (Join-Path $packageDir "*") -DestinationPath $zipPath -Force
+Start-Sleep -Milliseconds 500
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::CreateFromDirectory(
+    $packageDir,
+    $zipPath,
+    [System.IO.Compression.CompressionLevel]::Optimal,
+    $false
+)
 
 Write-Host "Package created:"
 Write-Host "  $zipPath"

@@ -1,125 +1,86 @@
-# Command Lab
+# Nghia PC Toolkit
 
-Small local prototype for an interactive command terminal.
+Interactive Windows terminal toolkit for quick diagnostics and safe maintenance.
 
-## User install flow
+## Install
 
-This is the command style users normally run after you publish the installer online:
+User-facing one-line install command:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/nghianghichcode/command-lab/main/install-online.ps1 | iex"
 ```
 
-If this command returns `404 Not Found`, GitHub cannot find the installer file at that URL yet.
+The installer downloads the release zip, installs the app into `%LOCALAPPDATA%\NghiaPCToolkit`, adds the folder to the user `PATH`, and opens the tool once.
 
-The installer downloads the zip, installs the app, adds the command to PATH, and opens the window once.
+After installing, open a new terminal and run:
 
-After that, they can open a new terminal and run:
+```bat
+pctool
+```
+
+Open it in a new terminal window:
+
+```bat
+pctool-window
+```
+
+Legacy aliases are kept for old installs:
 
 ```bat
 cmdlab
-```
-
-Open it in a new Windows Terminal tab/window:
-
-```bat
 cmdlab-window
 ```
 
-## How to publish it
+## Tools
 
-Create a zip package:
+```txt
+dashboard          Quick health summary
+system             OS, CPU, RAM, user, admin state
+disk               Drive usage and free-space warnings
+network            Local IP, DNS and connectivity checks
+ports host port    TCP port check, for example: ports github.com 443
+processes [n]      Top processes by memory
+temp               Scan temp folders and estimate cleanable size
+cleanup            Dry-run cleanup report
+cleanup --apply    Delete temp files after typing DELETE
+startup            List user startup-folder items
+path               Show PATH entries
+report             Save a desktop diagnostic report
+theme              carbon, graphite, matrix
+```
+
+Cleanup is safe by default: it does not delete anything unless `cleanup --apply` is used and the user types `DELETE`.
+
+## Publish
+
+Build the bundled executable and release zip:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\make-package.ps1
 ```
 
-Or publish everything through GitHub CLI:
+Publish source and release through GitHub CLI:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
 ```
 
-The package includes `cmdlab.exe` and its `_internal` runtime folder, so users do not need Python installed.
+The package includes `pctool.exe` and its `_internal` runtime folder, so users do not need Python installed.
 
-Upload this file somewhere public:
-
-```txt
-dist\command-lab.zip
-```
-
-The installer is already configured to download from:
+The installer currently downloads:
 
 ```txt
-https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=standalone-20260614
+https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-20260614
 ```
 
-If your repository name is not `command-lab`, replace `command-lab` in both GitHub URLs with the real repository name.
-
-Upload `install-online.ps1` to the root of the same repository. The user-facing command is:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/nghianghichcode/command-lab/main/install-online.ps1 | iex"
-```
-
-## Fix irm 404
-
-Check these items before sharing the install command:
-
-```txt
-1. The GitHub repo exists:
-   https://github.com/nghianghichcode/command-lab
-
-2. The repo is Public.
-
-3. install-online.ps1 is uploaded at the repo root, not inside a folder.
-
-4. The branch is main.
-   If the branch is master, use this instead:
-   https://raw.githubusercontent.com/nghianghichcode/command-lab/master/install-online.ps1
-
-5. The release asset exists with this exact filename:
-   command-lab.zip
-```
-
-Test the installer URL directly in a browser:
-
-```txt
-https://raw.githubusercontent.com/nghianghichcode/command-lab/main/install-online.ps1
-```
-
-If the browser shows the script text, `irm` will work. If the browser shows `404`, the URL/repo/branch/file path is still wrong.
-
-## Local install
-
-If the files are already on the machine:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\install-command.ps1
-```
-
-Then open a new terminal and run `cmdlab` or `cmdlab-window`.
-
-## Local run
+## Local Run
 
 ```bat
 run.cmd
 ```
 
-Useful commands:
+or:
 
-```txt
-help
-status
-run scan
-run build
-theme ocean
-theme amber
-diff
-note your text here
-history
-clear
-exit
+```bat
+python -B terminal_ui.py
 ```
-
-This version uses only Python standard library and ANSI terminal colors, so it can run without installing packages.

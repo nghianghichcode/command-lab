@@ -1,9 +1,9 @@
 $ErrorActionPreference = "Stop"
 
 # Upload dist/command-lab.zip to this repository's GitHub Releases.
-$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=standalone-20260614"
+$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-20260614"
 
-$InstallDir = Join-Path $env:LOCALAPPDATA "CommandLab"
+$InstallDir = Join-Path $env:LOCALAPPDATA "NghiaPCToolkit"
 $TempDir = Join-Path $env:TEMP ("command-lab-install-" + [guid]::NewGuid().ToString("N"))
 $ZipPath = Join-Path $TempDir "command-lab.zip"
 
@@ -17,7 +17,7 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
 try {
-    Write-Host "Downloading Command Lab..."
+    Write-Host "Downloading Nghia PC Toolkit..."
     Invoke-WebRequest -UseBasicParsing -Uri $ZipUrl -OutFile $ZipPath
 
     Write-Host "Installing to $InstallDir..."
@@ -42,15 +42,18 @@ try {
     Write-Host ""
     Write-Host "Installed."
     Write-Host "For later use, open a new terminal and run:"
-    Write-Host "  cmdlab"
+    Write-Host "  pctool"
     Write-Host ""
     Write-Host "Or open a new terminal window with:"
-    Write-Host "  cmdlab-window"
+    Write-Host "  pctool-window"
+    Write-Host ""
+    Write-Host "Legacy aliases also work:"
+    Write-Host "  cmdlab"
 
-    $launcher = Join-Path $InstallDir "cmdlab-window.cmd"
+    $launcher = Join-Path $InstallDir "pctool-window.cmd"
     if (Test-Path $launcher) {
         Write-Host ""
-        Write-Host "Opening Command Lab..."
+        Write-Host "Opening Nghia PC Toolkit..."
         Start-Process -FilePath $launcher
     }
 } finally {

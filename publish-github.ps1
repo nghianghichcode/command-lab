@@ -2,8 +2,8 @@ $ErrorActionPreference = "Stop"
 
 $RepoOwner = "nghianghichcode"
 $RepoName = "command-lab"
-$ReleaseTag = "v0.1.0"
-$ReleaseTitle = "Command Lab v0.1.0"
+$ReleaseTag = "v0.2.0"
+$ReleaseTitle = "Nghia PC Toolkit v0.2.0"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $zipPath = Join-Path $root "dist\command-lab.zip"
@@ -49,7 +49,7 @@ try {
     $repoExists = (Invoke-QuietNative { & $gh repo view "$RepoOwner/$RepoName" }) -eq 0
 
     if (-not $repoExists) {
-        & $gh repo create "$RepoOwner/$RepoName" --public --description "Interactive command terminal prototype" --disable-wiki
+        & $gh repo create "$RepoOwner/$RepoName" --public --description "Windows diagnostics and maintenance terminal toolkit" --disable-wiki
     }
 
     $remoteUrl = "https://github.com/$RepoOwner/$RepoName.git"
@@ -68,7 +68,7 @@ try {
 
     $releaseExists = (Invoke-QuietNative { & $gh release view $ReleaseTag --repo "$RepoOwner/$RepoName" }) -eq 0
     if (-not $releaseExists) {
-        & $gh release create $ReleaseTag $zipPath --repo "$RepoOwner/$RepoName" --title $ReleaseTitle --notes "Initial Windows command terminal installer."
+        & $gh release create $ReleaseTag $zipPath --repo "$RepoOwner/$RepoName" --title $ReleaseTitle --notes "Professional Windows PC toolkit build with bundled executable."
     } else {
         & $gh release upload $ReleaseTag $zipPath --repo "$RepoOwner/$RepoName" --clobber
     }

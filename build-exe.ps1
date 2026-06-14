@@ -3,9 +3,9 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $buildRoot = Join-Path $root "build"
 $exeDist = Join-Path $buildRoot "exe"
-$appDir = Join-Path $exeDist "cmdlab"
+$appDir = Join-Path $exeDist "pctool"
 $pyinstallerWork = Join-Path $buildRoot "pyinstaller"
-$exePath = Join-Path $appDir "cmdlab.exe"
+$exePath = Join-Path $appDir "pctool.exe"
 
 New-Item -ItemType Directory -Force -Path $buildRoot | Out-Null
 
@@ -14,7 +14,7 @@ if (Test-Path $exeDist) {
 }
 
 python -m PyInstaller `
-    --name cmdlab `
+    --name pctool `
     --clean `
     --distpath $exeDist `
     --workpath $pyinstallerWork `
