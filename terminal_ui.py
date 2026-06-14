@@ -525,6 +525,7 @@ class PCToolkit:
                 print("\033[1;1H", end="", flush=True)
                 self.render_banner()
                 self._render_menu(selected)
+                print("\033[0J", end="", flush=True)
         finally:
             print("\033[?25h", end="", flush=True)  # restore cursor
 
@@ -1226,22 +1227,32 @@ class PCToolkit:
             return
 
         selected = 0
-        total = min(len(apps), 24)
-        display_apps = apps[:total]
+        total = len(apps)
+        start_idx = 0
         title = "Apps" if not query else f"Apps: {query}"
 
         print("\033[?25l", end="", flush=True)  # hide cursor
         try:
             while True:
+                term_lines = shutil.get_terminal_size((80, 24)).lines
+                max_rows = max(5, term_lines - 18)
+
+                if selected < start_idx:
+                    start_idx = selected
+                elif selected >= start_idx + max_rows:
+                    start_idx = selected - max_rows + 1
+
                 print("\033[1;1H", end="", flush=True)
                 self.render_banner()
                 self.render_context(f"apps {query}".strip())
 
+                display_apps = apps[start_idx : start_idx + max_rows]
                 rows = []
                 for i, app in enumerate(display_apps):
+                    actual_idx = start_idx + i
                     name = shorten(app.name, 34).ljust(36)
                     kind = app.kind.ljust(9)
-                    if i == selected:
+                    if actual_idx == selected:
                         rows.append(
                             self.color(" > ", "accent", bold=True)
                             + self.color(name, "fg", bold=True)
@@ -1256,10 +1267,11 @@ class PCToolkit:
                             + self.color(str(app.path), "fg")
                         )
                 
-                if len(apps) > 24:
-                    rows.append(self.color(f"... {len(apps) - 24} mục khác", "muted"))
+                if total > max_rows:
+                    rows.append(self.color(f"... đang xem {start_idx + 1}-{min(start_idx + max_rows, total)} / {total} mục", "muted"))
 
                 self.write_panel(title, rows, footer="↑/↓: Di chuyển   Enter: Mở ứng dụng   ESC: Quay lại")
+                print("\033[0J", end="", flush=True)
 
                 key = self._read_key()
                 if key == "up":
@@ -1267,7 +1279,7 @@ class PCToolkit:
                 elif key == "down":
                     selected = (selected + 1) % total
                 elif key == "enter":
-                    app = display_apps[selected]
+                    app = apps[selected]
                     if app.kind in ("exe", "shortcut", "script"):
                         ok, msg = self.launch_path(Path(app.path))
                     elif app.kind == "url":
