@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # Upload dist/command-lab.zip to this repository's GitHub Releases.
-$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-v030-20260614"
+$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-v050-20260614"
 
 $InstallDir = Join-Path $env:LOCALAPPDATA "NghiaPCToolkit"
 $TempDir = Join-Path $env:TEMP ("command-lab-install-" + [guid]::NewGuid().ToString("N"))
@@ -17,10 +17,10 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
 try {
-    Write-Host "Downloading Nghia PC Toolkit..."
+    Write-Host "Đang tải Nghia PC Toolkit..."
     Invoke-WebRequest -UseBasicParsing -Uri $ZipUrl -OutFile $ZipPath
 
-    Write-Host "Installing to $InstallDir..."
+    Write-Host "Đang cài đặt vào $InstallDir..."
     Expand-Archive -Force -Path $ZipPath -DestinationPath $InstallDir
 
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -40,20 +40,20 @@ try {
     }
 
     Write-Host ""
-    Write-Host "Installed."
-    Write-Host "For later use, open a new terminal and run:"
+    Write-Host "Đã cài đặt thành công!"
+    Write-Host "Từ giờ, mở terminal mới và gõ:"
     Write-Host "  pctool"
     Write-Host ""
-    Write-Host "Or open a new terminal window with:"
+    Write-Host "Hoặc mở trong một cửa sổ riêng:"
     Write-Host "  pctool-window"
     Write-Host ""
-    Write-Host "Legacy aliases also work:"
+    Write-Host "Các lệnh cũ vẫn dùng được:"
     Write-Host "  cmdlab"
 
     $launcher = Join-Path $InstallDir "pctool-window.cmd"
     if (Test-Path $launcher) {
         Write-Host ""
-        Write-Host "Opening Nghia PC Toolkit..."
+        Write-Host "Đang mở Nghia PC Toolkit..."
         Start-Process -FilePath $launcher
     }
 } finally {

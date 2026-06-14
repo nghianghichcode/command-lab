@@ -1,18 +1,10 @@
 <div align="center">
 
-```
- _   _  ____ _   _ ___    _       ____   ____
-| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|
-|  \| | |  _| |_| || |  / _ \    | |_) | |
-| |\  | |_| |  _  || | / ___ \   |  __/| |___
-|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|
-```
-
 # Nghia PC Toolkit
 
-**Interactive Windows terminal toolkit — diagnostics, cleanup & system info at your fingertips.**
+**Công cụ dòng lệnh tương tác trên Windows — kiểm tra hệ thống, dọn rác & chuẩn đoán nhanh chóng.**
 
-![Version](https://img.shields.io/badge/version-v0.4.0-56d364?style=flat-square)
+![Version](https://img.shields.io/badge/version-v0.5.0-56d364?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Windows-0078d4?style=flat-square&logo=windows)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776ab?style=flat-square&logo=python)
 ![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)
@@ -21,36 +13,37 @@
 
 ---
 
-## ✨ Features
+## ✨ Tính năng nổi bật
 
-- 🖥️ **Arrow-key menu** — navigate with ↑/↓, no need to memorize commands
-- 📊 **Dashboard** — instant summary: RAM, disk, network, junk files
-- 🌐 **Network checks** — ping, DNS, TCP port testing
-- 📡 **Wi-Fi** — interface info and saved profiles
-- 🧹 **Safe cleanup** — temp & browser cache scanner with dry-run protection
-- 🎨 **3 themes** — Carbon, Graphite, Matrix
-- 📦 **No Python required** — ships as a single `.exe`
+- 🖥️ **Menu mũi tên** — điều hướng dễ dàng bằng phím ↑/↓, không cần nhớ lệnh
+- 📊 **Tổng quan (Dashboard)** — xem nhanh: RAM, ổ đĩa, mạng, tệp rác
+- 🌐 **Kiểm tra Mạng** — ping, phân giải DNS, thử kết nối cổng TCP
+- 📡 **Wi-Fi** — xem thông tin mạng và các cấu hình đã lưu
+- 🧹 **Dọn rác an toàn** — quét thư mục Temp & Cache trình duyệt (có chế độ xem trước)
+- 🎨 **3 Giao diện** — Carbon, Graphite, Matrix
+- 📦 **Không cần cài Python** — đóng gói gọn nhẹ thành 1 file `.exe` duy nhất
+- 🇻🇳 **Hỗ trợ Tiếng Việt** — giao diện và các lệnh đều có thể dùng bằng Tiếng Việt
 
 ---
 
-## ⚡ Install
+## ⚡ Cài đặt nhanh
 
-**One-line install** (recommended):
+**Lệnh cài đặt tự động** (khuyên dùng):
 
 ```powershell
 powershell -c "irm https://github.com/nghianghichcode/command-lab/raw/main/i.ps1|iex"
 ```
 
-> Downloads the latest release, installs to `%LOCALAPPDATA%\NghiaPCToolkit`,  
-> adds it to your user `PATH`, and launches the tool automatically.
+> Lệnh này sẽ tải bản release mới nhất, cài vào `%LOCALAPPDATA%\NghiaPCToolkit`,  
+> tự động thêm vào biến môi trường `PATH`, và mở ứng dụng lên ngay lập tức.
 
-**After installing**, open a new terminal and run:
+**Sau khi cài xong**, bạn chỉ cần mở một terminal mới và gõ:
 
 ```
 pctool
 ```
 
-Or open in its own window:
+Hoặc mở trong một cửa sổ terminal riêng biệt:
 
 ```
 pctool-window
@@ -58,46 +51,46 @@ pctool-window
 
 ---
 
-## 🧰 Commands
+## 🧰 Các lệnh hỗ trợ
 
-> The tool shows an **interactive menu** on startup — use arrow keys to navigate and Enter to select.  
-> You can also type any command directly.
+> Công cụ sẽ hiện một **Menu tương tác** ngay khi khởi động — dùng phím mũi tên để di chuyển và nhấn Enter để chọn.  
+> Bạn cũng có thể gõ trực tiếp bất kỳ lệnh nào.
 
-| Command | Description |
+| Lệnh / Bí danh | Chức năng |
 |---|---|
-| `dashboard` | Quick health summary — RAM, disk, network, junk |
-| `system` | OS, CPU, RAM, user, admin state |
-| `disk` | Drive usage with free-space warnings |
-| `network` | Local IP, DNS resolution, ping & port checks |
-| `wifi` | Wi-Fi status and saved profile names |
-| `wifi settings` | Open Windows Wi-Fi settings |
-| `ports <host> <port>` | TCP connectivity test — e.g. `ports github.com 443` |
-| `apps [name]` | Search installed Start Menu apps |
-| `open <app>` | Open an app/folder/setting — e.g. `open chrome` |
-| `processes [n]` | Top processes sorted by memory usage |
-| `temp` / `junk` | Scan temp folders and browser caches |
-| `cleanup` | Dry-run cleanup report (nothing deleted) |
-| `cleanup --apply` | Delete temp/cache files after typing `DELETE` |
-| `recycle --empty` | Empty Recycle Bin after typing `EMPTY` |
-| `startup` | List user startup-folder items |
-| `path` | Show all PATH entries |
-| `report` | Save a full diagnostic report to Desktop |
-| `theme` | Switch theme: `carbon`, `graphite`, `matrix` |
-| `history` | Show recent commands |
-| `clear` | Redraw the screen |
-| `exit` | Close the tool |
+| `dashboard` / `tongquan` | Xem tổng quan sức khỏe PC — RAM, ổ đĩa, mạng, rác |
+| `system` / `hethong` | OS, CPU, RAM, người dùng, quyền admin |
+| `disk` / `odia` | Dung lượng các ổ đĩa và cảnh báo nếu đầy |
+| `network` / `mang` | IP nội bộ, kiểm tra DNS, Ping & kết nối TCP |
+| `wifi` | Trạng thái Wi-Fi và tên các mạng đã lưu |
+| `wifi settings` | Mở cài đặt Wi-Fi của Windows |
+| `ports <host> <port>` | Kiểm tra kết nối TCP — VD: `ports github.com 443` |
+| `apps [tên]` / `ungdung` | Tìm kiếm các ứng dụng trong Start Menu |
+| `open <tên>` / `mo` | Mở thư mục / ứng dụng / cài đặt — VD: `open chrome` |
+| `processes [n]` / `tientrinh` | Xem top các tiến trình đang ngốn nhiều RAM nhất |
+| `temp` / `quetrac` | Quét thư mục temp và cache trình duyệt |
+| `cleanup` / `donrac` | Xem trước các tệp rác sẽ bị xóa (chưa xóa thật) |
+| `cleanup --apply` | Xóa các tệp rác sau khi xác nhận bằng cách gõ `XOA` |
+| `recycle --empty` | Dọn sạch Thùng rác sau khi xác nhận bằng cách gõ `TRONG` |
+| `startup` / `khoidong` | Liệt kê các tệp khởi động cùng Windows |
+| `path` | Xem các đường dẫn trong biến môi trường PATH |
+| `report` / `baocao` | Xuất báo cáo chẩn đoán đầy đủ ra màn hình Desktop |
+| `theme` / `giaodien` | Đổi màu giao diện: `carbon`, `graphite`, `matrix` |
+| `history` / `lichsu` | Xem lại các lệnh đã gõ |
+| `clear` / `xoa` | Xóa sạch màn hình và vẽ lại |
+| `exit` / `thoat` | Đóng công cụ |
 
-> 🔒 **Cleanup is safe by default.** Nothing is deleted without `--apply` and explicit confirmation.
+> 🔒 **Mặc định an toàn tuyệt đối.** Chức năng dọn rác sẽ không xóa bất kỳ file nào nếu không có cờ `--apply` và sự xác nhận của bạn.
 
 ---
 
-## 🎨 Themes
+## 🎨 Giao diện (Themes)
 
-| Theme | Description |
+| Tên Giao diện | Mô tả |
 |---|---|
-| `carbon` | Dark blue — default |
-| `graphite` | Warm amber |
-| `matrix` | Green-on-black |
+| `carbon` | Xanh đậm — Mặc định |
+| `graphite` | Hổ phách, vàng cam ấm áp |
+| `matrix` | Xanh lá trên nền đen |
 
 ```
 theme carbon
@@ -107,21 +100,21 @@ theme matrix
 
 ---
 
-## 🛠️ Build & Publish
+## 🛠️ Biên dịch & Phát hành
 
-Build a standalone `.exe`:
+Biên dịch thành file `.exe` độc lập:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\make-package.ps1
 ```
 
-Publish source + GitHub Release:
+Cập nhật mã nguồn + tạo GitHub Release:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
 ```
 
-Run directly without building:
+Chạy trực tiếp từ mã nguồn Python (không cần biên dịch):
 
 ```powershell
 python -B terminal_ui.py
@@ -129,11 +122,11 @@ python -B terminal_ui.py
 
 ---
 
-## 📋 Requirements
+## 📋 Yêu cầu hệ thống
 
 - Windows 10 / 11
-- No Python needed when using the `.exe`
-- Python 3.9+ if running from source
+- Không yêu cầu cài đặt Python nếu dùng bản `.exe`
+- Python 3.9+ nếu bạn muốn chạy từ mã nguồn
 
 ---
 

@@ -30,7 +30,7 @@ except ImportError:
 
 APP_NAME = "Nghia PC Toolkit"
 APP_COMMAND = "pctool"
-APP_VERSION = "0.4.0"
+APP_VERSION = "0.5.0"
 
 ESC = "\033["
 RESET = f"{ESC}0m"
@@ -212,12 +212,16 @@ class PCToolkit:
         self.last_temp_scan: TempScan | None = None
         self.commands: dict[str, Callable[[list[str]], None]] = {
             "help": self.cmd_help,
+            "trogiup": self.cmd_help,
             "?": self.cmd_help,
             "dashboard": self.cmd_dashboard,
+            "tongquan": self.cmd_dashboard,
             "status": self.cmd_dashboard,
             "system": self.cmd_system,
+            "hethong": self.cmd_system,
             "sys": self.cmd_system,
             "disk": self.cmd_disk,
+            "odia": self.cmd_disk,
             "disks": self.cmd_disk,
             "network": self.cmd_network,
             "net": self.cmd_network,
@@ -226,24 +230,37 @@ class PCToolkit:
             "port": self.cmd_ports,
             "wifi": self.cmd_wifi,
             "apps": self.cmd_apps,
+            "ungdung": self.cmd_apps,
             "app": self.cmd_apps,
             "open": self.cmd_open,
+            "mo": self.cmd_open,
             "launch": self.cmd_open,
             "processes": self.cmd_processes,
+            "tientrinh": self.cmd_processes,
             "ps": self.cmd_processes,
             "temp": self.cmd_temp,
+            "quetrac": self.cmd_temp,
             "junk": self.cmd_temp,
             "clean": self.cmd_cleanup,
+            "donrac": self.cmd_cleanup,
             "cleanup": self.cmd_cleanup,
             "recycle": self.cmd_recycle,
+            "thungrac": self.cmd_recycle,
             "startup": self.cmd_startup,
+            "khoidong": self.cmd_startup,
             "path": self.cmd_path,
             "report": self.cmd_report,
+            "baocao": self.cmd_report,
             "theme": self.cmd_theme,
+            "giaodien": self.cmd_theme,
             "history": self.cmd_history,
+            "lichsu": self.cmd_history,
             "about": self.cmd_about,
+            "thongtin": self.cmd_about,
             "clear": self.cmd_clear,
+            "xoa": self.cmd_clear,
             "exit": self.cmd_exit,
+            "thoat": self.cmd_exit,
             "quit": self.cmd_exit,
         }
 
@@ -317,27 +334,18 @@ class PCToolkit:
         colors = ("accent", "accent_2", "success", "warning", "accent")
         text = shorten(label, 42)
         for frame, color in zip(frames, colors):
-            line = self.color(frame, color, bold=True) + self.color(f" loading {text}", "muted")
+            line = self.color(frame, color, bold=True) + self.color(f" đang tải {text}", "muted")
             print("\r" + pad(line, width), end="", flush=True)
             time.sleep(0.035)
         print("\r" + (" " * width) + "\r", end="", flush=True)
         print()
 
     def render_banner(self) -> None:
-        art = [
-            r" _   _  ____ _   _ ___    _       ____   ____",
-            r"| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|",
-            r"|  \| | |  _| |_| || |  / _ \    | |_) | |",
-            r"| |\  | |_| |  _  || | / ___ \   |  __/| |___",
-            r"|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|",
-            r"                 T O O L K I T",
-        ]
         print(self.color(self.line("."), "muted"))
-        colors = ("accent", "accent_2", "success", "accent_2", "accent", "warning")
-        for index, row in enumerate(art):
-            print(self.color(row, colors[index % len(colors)], bold=True))
-        print(self.color(":: NGHIA PC TOOLKIT ::", "fg", bold=True))
-        print(self.color(f"{APP_NAME} v{APP_VERSION} - Windows diagnostics and maintenance CLI", "muted"))
+        print(
+            self.color(" :: NGHIA PC TOOLKIT :: ", "accent", bold=True)
+            + self.color(f"v{APP_VERSION} - Công cụ hệ thống Windows", "muted")
+        )
         print(self.color(self.line("."), "muted"))
         print()
 
@@ -354,21 +362,21 @@ class PCToolkit:
     # Interactive arrow-key menu                                           #
     # ------------------------------------------------------------------ #
     MENU_ITEMS: list[tuple[str, str]] = [
-        ("Dashboard",   "dashboard"),
-        ("System Info", "system"),
-        ("Disk Usage",  "disk"),
-        ("Network",     "network"),
+        ("Tổng quan",   "dashboard"),
+        ("Hệ thống",    "system"),
+        ("Ổ đĩa",       "disk"),
+        ("Mạng",        "network"),
         ("Wi-Fi",       "wifi"),
-        ("Apps",        "apps"),
-        ("Processes",   "processes"),
-        ("Junk Scan",   "temp"),
-        ("Cleanup",     "cleanup"),
-        ("Startup",     "startup"),
-        ("Report",      "report"),
-        ("Theme",       "theme"),
-        ("History",     "history"),
-        ("Help",        "help"),
-        ("Exit",        "exit"),
+        ("Ứng dụng",    "apps"),
+        ("Tiến trình",  "processes"),
+        ("Quét rác",    "junk"),
+        ("Dọn rác",     "cleanup"),
+        ("Khởi động",   "startup"),
+        ("Báo cáo",     "report"),
+        ("Giao diện",   "theme"),
+        ("Lịch sử",     "history"),
+        ("Trợ giúp",    "help"),
+        ("Thoát",       "exit"),
     ]
 
     def _read_key(self) -> str:
@@ -411,7 +419,7 @@ class PCToolkit:
 
         sep = self.color("+" + "-" * (width - 2) + "+", "muted")
         header_text = " " + self.color("MENU", "accent", bold=True) + \
-            self.color("  Up/Down Navigate   Enter Select   ESC Text Mode", "muted")
+            self.color("  ↑/↓: Di chuyển   Enter: Chọn   ESC: Gõ lệnh", "muted")
         header_line = (
             self.color("|", "muted")
             + pad(header_text, width - 2)
@@ -508,7 +516,7 @@ class PCToolkit:
     def _wait_key(self) -> None:
         """After showing a command result, wait for any key before returning to menu."""
         print()
-        print(self.color("  Press any key to return to menu...", "muted"))
+        print(self.color("  Nhấn phím bất kỳ để quay lại menu...", "muted"))
         if _HAS_MSVCRT:
             _msvcrt.getwch()
         else:
@@ -556,7 +564,7 @@ class PCToolkit:
             parts = shlex.split(raw)
         except ValueError as exc:
             self.render_screen("parse error", animate=True)
-            self.error(f"Cannot parse command: {exc}")
+            self.error(f"Không hiểu được lệnh: {exc}")
             return
 
         command = parts[0].lower()
@@ -572,13 +580,13 @@ class PCToolkit:
             return
 
         if command == "theme" and args:
-            handler(args) if handler else self.error(f"Unknown command: {command}")
+            handler(args) if handler else self.error(f"Không tìm thấy lệnh: {command}")
             return
 
         self.render_screen(raw, animate=True)
 
         if handler is None:
-            self.error(f"Unknown command: {command}")
+            self.error(f"Không tìm thấy lệnh: {command}")
             return
 
         handler(args)
@@ -588,27 +596,27 @@ class PCToolkit:
 
     def cmd_help(self, _: list[str]) -> None:
         rows = [
-            self.command_row("dashboard", "Quick health summary for this PC"),
-            self.command_row("system", "OS, CPU, RAM, user, admin state"),
-            self.command_row("disk", "Drive usage and free-space warnings"),
-            self.command_row("network", "Local IP, DNS, gateway-style connectivity checks"),
-            self.command_row("wifi", "Wi-Fi status and saved profile names"),
-            self.command_row("wifi settings", "Open Windows Wi-Fi settings"),
-            self.command_row("ports host port", "Test TCP connectivity, example: ports github.com 443"),
-            self.command_row("apps [name]", "Search installed Start Menu apps"),
-            self.command_row("open <app>", "Open an installed app, example: open chrome"),
-            self.command_row("processes [n]", "Show top running processes by memory"),
-            self.command_row("temp / junk", "Scan temp and browser cache folders"),
-            self.command_row("cleanup", "Dry-run cleanup report"),
-            self.command_row("cleanup --apply", "Delete temp/cache files after confirmation"),
-            self.command_row("recycle --empty", "Empty Recycle Bin after confirmation"),
-            self.command_row("startup", "List user startup-folder items"),
-            self.command_row("path", "Show PATH entries"),
-            self.command_row("report", "Write a desktop diagnostic report"),
-            self.command_row("theme", "Switch theme: carbon, graphite, matrix"),
-            self.command_row("clear / exit", "Redraw screen or close the tool"),
+            self.command_row("dashboard", "Xem tổng quan sức khỏe hệ thống (RAM, CPU, Ổ đĩa, Mạng)"),
+            self.command_row("system", "Thông tin chi tiết về Hệ điều hành, CPU, RAM"),
+            self.command_row("disk", "Xem dung lượng các ổ đĩa và cảnh báo đầy"),
+            self.command_row("network", "Kiểm tra IP nội bộ, DNS và kết nối mạng"),
+            self.command_row("wifi", "Xem trạng thái Wi-Fi và các mạng đã lưu"),
+            self.command_row("wifi settings", "Mở Cài đặt Wi-Fi của Windows"),
+            self.command_row("ports host port", "Kiểm tra cổng TCP (VD: ports github.com 443)"),
+            self.command_row("apps [name]", "Tìm kiếm ứng dụng trong Start Menu"),
+            self.command_row("open <app>", "Mở nhanh ứng dụng hoặc thư mục (VD: open chrome)"),
+            self.command_row("processes [n]", "Xem các tiến trình ngốn RAM nhất"),
+            self.command_row("temp / junk", "Quét tìm tệp rác trong Temp và Cache trình duyệt"),
+            self.command_row("cleanup", "Xem trước các tệp rác sẽ bị xóa (chưa xóa thật)"),
+            self.command_row("cleanup --apply", "Xóa thật các tệp rác sau khi xác nhận"),
+            self.command_row("recycle --empty", "Dọn sạch Thùng rác sau khi xác nhận"),
+            self.command_row("startup", "Liệt kê các tệp khởi động cùng Windows"),
+            self.command_row("path", "Xem các biến môi trường PATH"),
+            self.command_row("report", "Xuất báo cáo hệ thống ra màn hình Desktop"),
+            self.command_row("theme", "Đổi giao diện: carbon, graphite, matrix"),
+            self.command_row("clear / exit", "Xóa màn hình hoặc Thoát công cụ"),
         ]
-        self.write_panel("Tools", rows, footer="Safe by default: cleanup does not delete unless you use --apply and confirm.")
+        self.write_panel("Trợ Giúp", rows, footer="An toàn: Lệnh dọn rác sẽ không xóa trừ khi bạn dùng --apply và xác nhận.")
 
     def cmd_dashboard(self, _: list[str]) -> None:
         local_ip = self.local_ip()
@@ -623,16 +631,16 @@ class PCToolkit:
             disk_warning = f"{worst['drive']} {worst['used_percent']:.1f}% used"
 
         rows = [
-            self.kv("Computer", socket.gethostname()),
-            self.kv("User", getpass.getuser()),
-            self.kv("OS", platform.platform()),
-            self.kv("Admin", "yes" if self.is_admin() else "no"),
-            self.kv("Memory", self.memory_summary(memory)),
-            self.kv("Disk", disk_warning),
-            self.kv("Network", local_ip),
-            self.kv("Junk files", f"{human_bytes(temp_scan.bytes_total)} across {temp_scan.files} files"),
+            self.kv("Máy tính", socket.gethostname()),
+            self.kv("Người dùng", getpass.getuser()),
+            self.kv("HĐH", platform.platform()),
+            self.kv("Quyền Admin", "Có" if self.is_admin() else "Không"),
+            self.kv("RAM", self.memory_summary(memory)),
+            self.kv("Ổ đĩa", disk_warning),
+            self.kv("Mạng", local_ip),
+            self.kv("Tệp rác", f"{human_bytes(temp_scan.bytes_total)} trong {temp_scan.files} tệp"),
         ]
-        self.write_panel("Dashboard", rows, footer="Run: system | disk | network | wifi | apps | cleanup | report")
+        self.write_panel("Tổng Quan", rows, footer="Gõ lệnh: system | disk | network | wifi | apps | cleanup | report")
 
     def kv(self, key: str, value: str) -> str:
         display = shorten(value, 92)
@@ -697,17 +705,17 @@ class PCToolkit:
     def cmd_system(self, _: list[str]) -> None:
         memory = self.memory_info()
         rows = [
-            self.kv("Computer", socket.gethostname()),
-            self.kv("User", getpass.getuser()),
-            self.kv("Admin", "yes" if self.is_admin() else "no"),
-            self.kv("OS", platform.platform()),
-            self.kv("Arch", platform.machine() or "unknown"),
+            self.kv("Máy tính", socket.gethostname()),
+            self.kv("Người dùng", getpass.getuser()),
+            self.kv("Quyền Admin", "Có" if self.is_admin() else "Không"),
+            self.kv("HĐH", platform.platform()),
+            self.kv("Kiến trúc", platform.machine() or "unknown"),
             self.kv("CPU", self.cpu_name()),
             self.kv("RAM", self.memory_summary(memory)),
             self.kv("Shell", os.environ.get("COMSPEC", "unknown")),
-            self.kv("Install dir", str(Path.cwd())),
+            self.kv("Thư mục cài đặt", str(Path.cwd())),
         ]
-        self.write_panel("System", rows)
+        self.write_panel("Hệ Thống", rows)
 
     def disk_info(self) -> list[dict[str, int | float | str]]:
         drives: list[dict[str, int | float | str]] = []
@@ -743,12 +751,12 @@ class PCToolkit:
             rows.append(
                 f"{self.color(str(item['drive']).ljust(8), 'accent_2', bold=True)} "
                 f"{self.color(f'{pct:5.1f}% used', key)} "
-                f"{self.color('free', 'muted')} {human_bytes(int(item['free']))} "
-                f"{self.color('total', 'muted')} {human_bytes(int(item['total']))}"
+                f"{self.color('trống', 'muted')} {human_bytes(int(item['free']))} "
+                f"{self.color('tổng', 'muted')} {human_bytes(int(item['total']))}"
             )
         if not rows:
-            rows = ["No readable drives found."]
-        self.write_panel("Disk Usage", rows)
+            rows = ["Không tìm thấy ổ đĩa nào."]
+        self.write_panel("Dung Lượng Ổ Đĩa", rows)
 
     def local_ip(self) -> str:
         try:
@@ -790,14 +798,14 @@ class PCToolkit:
         github_ok = self.tcp_check("github.com", 443, timeout=3)
 
         rows = [
-            self.kv("Hostname", socket.gethostname()),
-            self.kv("Local IP", self.local_ip()),
+            self.kv("Tên máy", socket.gethostname()),
+            self.kv("IP nội bộ", self.local_ip()),
             self.kv("DNS", self.status_text(dns_ok, dns_message)),
             self.kv("Ping 1.1.1.1", self.status_text(cloudflare_ok, cloudflare_msg)),
             self.kv("Ping 8.8.8.8", self.status_text(google_ok, google_msg)),
             self.kv("GitHub 443", self.status_text(github_ok, "tcp ok" if github_ok else "tcp failed")),
         ]
-        self.write_panel("Network", rows, footer="If ping fails but GitHub 443 is ok, ICMP may be blocked by the network.")
+        self.write_panel("Mạng", rows, footer="Nếu ping thất bại nhưng GitHub 443 OK, ICMP có thể đang bị chặn.")
 
     def status_text(self, ok: bool, value: str) -> str:
         return self.color(value, "success" if ok else "danger", bold=ok)
@@ -848,7 +856,7 @@ class PCToolkit:
     def cmd_wifi(self, args: list[str]) -> None:
         if args and args[0].lower() in {"open", "settings", "setting"}:
             ok, message = self.launch_uri("ms-settings:network-wifi")
-            rows = [self.kv("Wi-Fi Settings", self.status_text(ok, message))]
+            rows = [self.kv("Cài đặt Wi-Fi", self.status_text(ok, message))]
             self.write_panel("Wi-Fi", rows)
             return
 
@@ -856,28 +864,28 @@ class PCToolkit:
         profiles, profile_error = self.wifi_profiles()
         if "status" in info:
             rows = [
-                self.kv("Status", info["status"]),
-                self.kv("Profiles", str(len(profiles)) if profiles else profile_error or "none"),
+                self.kv("Trạng thái", info["status"]),
+                self.kv("Mạng đã lưu", str(len(profiles)) if profiles else profile_error or "không có"),
             ]
         else:
             rows = [
-                self.kv("Interface", info.get("Name", "unavailable")),
-                self.kv("State", info.get("State", "unknown")),
-                self.kv("SSID", info.get("SSID", "not connected")),
-                self.kv("Signal", info.get("Signal", "unknown")),
-                self.kv("Radio", info.get("Radio", "unknown")),
-                self.kv("Auth", info.get("Auth", "unknown")),
-                self.kv("Profiles", str(len(profiles)) if profiles else profile_error or "none"),
+                self.kv("Giao diện", info.get("Name", "không rõ")),
+                self.kv("Trạng thái", info.get("State", "không rõ")),
+                self.kv("SSID", info.get("SSID", "chưa kết nối")),
+                self.kv("Tín hiệu", info.get("Signal", "không rõ")),
+                self.kv("Loại sóng", info.get("Radio", "không rõ")),
+                self.kv("Bảo mật", info.get("Auth", "không rõ")),
+                self.kv("Mạng đã lưu", str(len(profiles)) if profiles else profile_error or "không có"),
             ]
         if profiles:
             rows.append("")
             rows.extend(self.color(name, "accent_2") for name in profiles[:18])
             if len(profiles) > 18:
-                rows.append(self.color(f"... {len(profiles) - 18} more", "muted"))
+                rows.append(self.color(f"... {len(profiles) - 18} mạng khác", "muted"))
         self.write_panel(
             "Wi-Fi",
             rows,
-            footer="Use wifi settings to open Windows Wi-Fi. Saved passwords are not displayed.",
+            footer='Gõ "wifi settings" để mở Cài đặt. Mật khẩu không được hiển thị để bảo mật.',
         )
 
     def tcp_check(self, host: str, port: int, timeout: int = 4) -> bool:
@@ -889,7 +897,7 @@ class PCToolkit:
 
     def cmd_ports(self, args: list[str]) -> None:
         if len(args) < 2:
-            self.error("Usage: ports <host> <port> [port...]")
+            self.error("Cú pháp: ports <host> <port> [port...]")
             return
 
         host = args[0]
@@ -898,15 +906,15 @@ class PCToolkit:
             try:
                 port = int(raw_port)
             except ValueError:
-                rows.append(f"{self.color(raw_port.ljust(8), 'danger')} invalid port")
+                rows.append(f"{self.color(raw_port.ljust(8), 'danger')} cổng không hợp lệ")
                 continue
 
             ok = self.tcp_check(host, port)
             rows.append(
                 f"{self.color((str(port) + '/tcp').ljust(10), 'accent_2')} "
-                + self.status_text(ok, "open/reachable" if ok else "closed/blocked")
+                + self.status_text(ok, "mở/kết nối được" if ok else "đóng/bị chặn")
             )
-        self.write_panel(f"Port Check: {host}", rows)
+        self.write_panel(f"Kiểm tra Cổng: {host}", rows)
 
     def cmd_processes(self, args: list[str]) -> None:
         limit = 12
@@ -914,11 +922,11 @@ class PCToolkit:
             try:
                 limit = max(1, min(50, int(args[0])))
             except ValueError:
-                self.error("Usage: processes [number]")
+                self.error("Cú pháp: processes [số_lượng]")
                 return
 
         if os.name != "nt":
-            self.write_panel("Processes", ["Process listing is currently optimized for Windows."])
+            self.write_panel("Processes", ["Tính năng này hiện chỉ tối ưu cho Windows."])
             return
 
         code, output = run_capture(["tasklist", "/FO", "CSV", "/NH"], timeout=10)
@@ -957,7 +965,7 @@ class PCToolkit:
             f"{human_bytes(mem_kb * 1024)}"
             for name, pid, mem_kb in processes[:limit]
         ]
-        self.write_panel("Top Processes", rows, footer="Sorted by memory.")
+        self.write_panel("Tiến Trình Đang Chạy", rows, footer="Sắp xếp theo mức dùng RAM.")
 
     def temp_roots(self) -> list[Path]:
         roots: list[Path] = []
@@ -1055,15 +1063,15 @@ class PCToolkit:
         temp_count = len(self.temp_roots())
         cache_count = len(self.browser_cache_roots())
         rows = [
-            self.kv("Targets", f"{len(scan.roots)} safe folders"),
-            self.kv("Temp folders", str(temp_count)),
-            self.kv("Cache folders", str(cache_count)),
-            self.kv("Files", str(scan.files)),
-            self.kv("Subfolders", str(scan.dirs)),
-            self.kv("Estimated size", human_bytes(scan.bytes_total)),
-            self.kv("Access errors", str(scan.errors)),
+            self.kv("Thư mục quét", f"{len(scan.roots)} thư mục an toàn"),
+            self.kv("Thư mục Temp", str(temp_count)),
+            self.kv("Thư mục Cache", str(cache_count)),
+            self.kv("Số tệp tin", str(scan.files)),
+            self.kv("Thư mục con", str(scan.dirs)),
+            self.kv("Dung lượng ước tính", human_bytes(scan.bytes_total)),
+            self.kv("Lỗi truy cập", str(scan.errors)),
         ]
-        self.write_panel("Junk Scan", rows, footer="Run cleanup for dry-run, or cleanup --apply to delete after confirmation.")
+        self.write_panel("Quét Rác", rows, footer="Chạy lệnh 'cleanup' để dọn dẹp, hoặc 'cleanup --apply' để xóa ngay.")
 
     def cmd_cleanup(self, args: list[str]) -> None:
         apply = "--apply" in args or "-y" in args
@@ -1072,23 +1080,23 @@ class PCToolkit:
 
         if not apply:
             rows = [
-                self.kv("Mode", "dry-run"),
+                self.kv("Chế độ", "chỉ xem trước"),
                 self.kv("Targets", ", ".join(str(root) for root in scan.roots)),
-                self.kv("Files", str(scan.files)),
-                self.kv("Estimated size", human_bytes(scan.bytes_total)),
+                self.kv("Số tệp tin", str(scan.files)),
+                self.kv("Dung lượng ước tính", human_bytes(scan.bytes_total)),
                 self.kv("Errors", str(scan.errors)),
             ]
             self.write_panel(
-                "Cleanup Preview",
+                "Xem Trước Dọn Dẹp",
                 rows,
-                footer="Nothing was deleted. Use cleanup --apply and type DELETE to confirm.",
+                footer="Chưa có gì bị xóa. Dùng cleanup --apply và gõ XOA để xác nhận.",
             )
             return
 
-        print(self.color("This will delete files inside temp/cache folders only.", "warning", bold=True))
-        confirm = input(self.color("Type DELETE to continue: ", "danger", bold=True)).strip()
-        if confirm != "DELETE":
-            print(self.color("Cleanup cancelled.", "muted"))
+        print(self.color("Lệnh này chỉ xóa các tệp rác trong temp/cache.", "warning", bold=True))
+        confirm = input(self.color("Gõ XOA để tiếp tục: ", "danger", bold=True)).strip()
+        if confirm != "XOA":
+            print(self.color("Đã hủy dọn dẹp.", "muted"))
             return
 
         deleted_files = 0
@@ -1112,11 +1120,11 @@ class PCToolkit:
                     pass
 
         rows = [
-            self.kv("Deleted files", str(deleted_files)),
-            self.kv("Freed", human_bytes(deleted_bytes)),
-            self.kv("Skipped/errors", str(errors)),
+            self.kv("Tệp đã xóa", str(deleted_files)),
+            self.kv("Đã giải phóng", human_bytes(deleted_bytes)),
+            self.kv("Bỏ qua/Lỗi", str(errors)),
         ]
-        self.write_panel("Cleanup Complete", rows)
+        self.write_panel("Hoàn Tất Dọn Dẹp", rows)
 
     def app_roots(self) -> list[Path]:
         roots: list[Path] = []
@@ -1190,12 +1198,12 @@ class PCToolkit:
         apps = self.discover_apps(query)
         rows = [self.app_row(app) for app in apps[:24]]
         if not rows:
-            message = f"No Start Menu apps matched: {query}" if query else "No Start Menu apps found."
+            message = f"Không tìm thấy ứng dụng: {query}" if query else "Không có ứng dụng nào."
             rows = [message]
         elif len(apps) > 24:
-            rows.append(self.color(f"... {len(apps) - 24} more", "muted"))
+            rows.append(self.color(f"... {len(apps) - 24} mục khác", "muted"))
         title = "Apps" if not query else f"Apps: {query}"
-        self.write_panel(title, rows, footer="Use open <app name> to launch the best match.")
+        self.write_panel(title, rows, footer="Dùng lệnh: open <tên> để mở ứng dụng.")
 
     def launch_uri(self, uri: str) -> tuple[bool, str]:
         try:
@@ -1203,7 +1211,7 @@ class PCToolkit:
                 os.startfile(uri)  # type: ignore[attr-defined]
             else:
                 subprocess.Popen(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True, "opened"
+            return True, "đã mở"
         except Exception as exc:
             return False, str(exc)
 
@@ -1213,20 +1221,20 @@ class PCToolkit:
                 os.startfile(str(path))  # type: ignore[attr-defined]
             else:
                 subprocess.Popen(["xdg-open", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True, "opened"
+            return True, "đã mở"
         except Exception as exc:
             return False, str(exc)
 
     def launch_command(self, command: list[str]) -> tuple[bool, str]:
         try:
             subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True, "opened"
+            return True, "đã mở"
         except Exception as exc:
             return False, str(exc)
 
     def cmd_open(self, args: list[str]) -> None:
         if not args:
-            self.error("Usage: open <app/settings/folder>")
+            self.error("Cú pháp: open <ứng dụng/cài đặt/thư mục>")
             return
 
         target = " ".join(args).strip()
@@ -1261,49 +1269,49 @@ class PCToolkit:
 
         if key in quick_paths:
             ok, message = self.launch_path(quick_paths[key])
-            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            self.write_panel("Mở", [self.kv(target, self.status_text(ok, message))])
             return
         if key in quick_uris:
             ok, message = self.launch_uri(quick_uris[key])
-            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            self.write_panel("Mở", [self.kv(target, self.status_text(ok, message))])
             return
         if key in quick_commands:
             ok, message = self.launch_command(quick_commands[key])
-            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            self.write_panel("Mở", [self.kv(target, self.status_text(ok, message))])
             return
 
         matches = self.discover_apps(target, limit=10)
         if not matches:
             self.write_panel(
                 "Open",
-                [self.color(f"No app matched: {target}", "danger", bold=True)],
-                footer="Try apps <name> to search Start Menu shortcuts.",
+                [self.color(f"Không tìm thấy ứng dụng: {target}", "danger", bold=True)],
+                footer="Hãy dùng: apps <tên> để tìm trong Start Menu.",
             )
             return
 
         selected = matches[0]
         ok, message = self.launch_path(selected.path)
         rows = [
-            self.kv("App", selected.name),
-            self.kv("Type", selected.kind),
-            self.kv("Result", self.status_text(ok, message)),
+            self.kv("Ứng dụng", selected.name),
+            self.kv("Loại", selected.kind),
+            self.kv("Kết quả", self.status_text(ok, message)),
         ]
         if len(matches) > 1:
             rows.append("")
-            rows.append(self.color("Other matches:", "muted"))
+            rows.append(self.color("Các kết quả khác:", "muted"))
             rows.extend(self.color(match.name, "accent_2") for match in matches[1:6])
-        self.write_panel("Open", rows, footer=str(selected.path))
+        self.write_panel("Mở", rows, footer=str(selected.path))
 
     def cmd_recycle(self, args: list[str]) -> None:
         if "--empty" not in args:
             self.write_panel(
-                "Recycle Bin",
+                "Thùng Rác",
                 [
-                    self.kv("Mode", "preview"),
-                    "This command can empty the Windows Recycle Bin.",
-                    "Run recycle --empty and type EMPTY to confirm.",
+                    self.kv("Chế độ", "xem trước"),
+                    "Lệnh này sẽ dọn sạch Thùng rác Windows.",
+                    "Chạy lệnh: recycle --empty và gõ TRONG để xác nhận.",
                 ],
-                footer="No files were deleted.",
+                footer="Chưa có gì bị xóa.",
             )
             return
 
@@ -1311,39 +1319,39 @@ class PCToolkit:
             self.write_panel("Recycle Bin", ["Recycle Bin cleanup is currently Windows-only."])
             return
 
-        print(self.color("This will empty the Windows Recycle Bin.", "warning", bold=True))
-        confirm = input(self.color("Type EMPTY to continue: ", "danger", bold=True)).strip()
-        if confirm != "EMPTY":
-            print(self.color("Recycle Bin cleanup cancelled.", "muted"))
+        print(self.color("Tất cả tệp trong Thùng rác sẽ bị xóa vĩnh viễn.", "warning", bold=True))
+        confirm = input(self.color("Gõ TRONG để tiếp tục: ", "danger", bold=True)).strip()
+        if confirm != "TRONG":
+            print(self.color("Đã hủy dọn Thùng rác.", "muted"))
             return
 
         flags = 0x00000001 | 0x00000002 | 0x00000004
         try:
             result = ctypes.windll.shell32.SHEmptyRecycleBinW(None, None, flags)
             ok = result == 0
-            message = "emptied" if ok else f"failed: HRESULT {result}"
+            message = "đã dọn sạch" if ok else f"lỗi: HRESULT {result}"
         except Exception as exc:
             ok = False
             message = str(exc)
-        self.write_panel("Recycle Bin", [self.kv("Result", self.status_text(ok, message))])
+        self.write_panel("Thùng Rác", [self.kv("Kết quả", self.status_text(ok, message))])
 
     def cmd_startup(self, _: list[str]) -> None:
         startup = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
         if not startup.exists():
-            self.write_panel("Startup", ["Startup folder not found."])
+            self.write_panel("Startup", ["Không tìm thấy thư mục Khởi động."])
             return
         items = list(startup.iterdir())
         rows = [self.color(item.name, "accent_2") for item in items[:40]]
         if not rows:
-            rows = ["No user startup-folder items."]
-        self.write_panel("Startup Folder", rows, footer=str(startup))
+            rows = ["Không có tệp nào tự khởi động."]
+        self.write_panel("Khởi Động", rows, footer=str(startup))
 
     def cmd_path(self, _: list[str]) -> None:
         entries = [entry for entry in os.environ.get("PATH", "").split(os.pathsep) if entry]
         rows = [f"{index:02d}. {entry}" for index, entry in enumerate(entries[:40], start=1)]
         if len(entries) > 40:
-            rows.append(f"... {len(entries) - 40} more")
-        self.write_panel("PATH", rows or ["PATH is empty."])
+            rows.append(f"... {len(entries) - 40} dòng khác")
+        self.write_panel("PATH", rows or ["PATH trống."])
 
     def cmd_report(self, _: list[str]) -> None:
         desktop = Path.home() / "Desktop"
@@ -1394,11 +1402,11 @@ class PCToolkit:
         for candidate in candidates:
             try:
                 candidate.write_text("\n".join(lines), encoding="utf-8")
-                self.write_panel("Report", [self.kv("Saved", str(candidate))])
+                self.write_panel("Báo Cáo", [self.kv("Đã lưu", str(candidate))])
                 return
             except OSError as exc:
                 last_error = str(exc)
-        self.error(f"Could not write report: {last_error}")
+        self.error(f"Không thể xuất báo cáo: {last_error}")
 
     def cmd_theme(self, args: list[str]) -> None:
         if not args:
@@ -1410,40 +1418,40 @@ class PCToolkit:
                     + self.color(name.ljust(10), "accent_2", bold=name == self.theme.name)
                     + self.color(f"theme {name}", "muted")
                 )
-            self.write_panel("Themes", rows, footer="Use: theme carbon | theme graphite | theme matrix")
+            self.write_panel("Giao Diện", rows, footer="Gõ: theme carbon | theme graphite | theme matrix")
             return
 
         name = args[0].lower()
         next_theme = THEMES.get(name)
         if not next_theme:
             self.render_screen(f"theme {name}", animate=True)
-            self.error(f"Unknown theme: {name}")
+            self.error(f"Không có giao diện này: {name}")
             return
         self.theme = next_theme
         self.render_screen(f"theme {name}", animate=True)
-        self.write_panel("Theme", [self.kv("Active", name)])
+        self.write_panel("Giao Diện", [self.kv("Đang dùng", name)])
 
     def cmd_history(self, _: list[str]) -> None:
         rows = [f"{index:02d}. {item}" for index, item in enumerate(self.history[-14:], start=1)]
-        self.write_panel("History", rows or ["No history yet."])
+        self.write_panel("History", rows or ["Chưa có lịch sử lệnh."])
 
     def cmd_about(self, _: list[str]) -> None:
         rows = [
-            f"{APP_NAME} is a local Windows diagnostics and maintenance CLI.",
-            "It runs as a bundled executable and uses safe read-only checks by default.",
-            "Cleanup only touches temp folders and requires explicit confirmation.",
+            f"{APP_NAME} là công cụ kiểm tra và bảo trì hệ thống Windows qua dòng lệnh.",
+            "Nó chạy dạng độc lập (.exe), mặc định an toàn vì chỉ xem hệ thống.",
+            "Việc dọn rác chỉ tác động mục temp/cache và phải xác nhận gõ lệnh rõ ràng.",
         ]
-        self.write_panel("About", rows)
+        self.write_panel("Thông Tin", rows)
 
     def cmd_clear(self, _: list[str]) -> None:
         self.boot()
 
     def cmd_exit(self, _: list[str]) -> None:
         self.running = False
-        print(self.color(f"Closed {APP_NAME}.", "muted"))
+        print(self.color(f"Đã đóng {APP_NAME}.", "muted"))
 
     def error(self, message: str) -> None:
-        self.write_panel("Error", [self.color(message, "danger", bold=True)], footer="Run help to list available commands.")
+        self.write_panel("Lỗi", [self.color(message, "danger", bold=True)], footer="Gõ 'help' để xem các lệnh hỗ trợ.")
 
 
 def main() -> int:
