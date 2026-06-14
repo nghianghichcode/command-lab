@@ -34,6 +34,12 @@ Create a zip package:
 powershell -ExecutionPolicy Bypass -File .\make-package.ps1
 ```
 
+Or publish everything through GitHub CLI:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
+```
+
 Upload this file somewhere public:
 
 ```txt
