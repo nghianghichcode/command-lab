@@ -44,9 +44,7 @@ Push-Location $root
 try {
     & $gh auth status | Out-Host
 
-    if (-not (Test-Path $zipPath)) {
-        & powershell -ExecutionPolicy Bypass -File (Join-Path $root "make-package.ps1")
-    }
+    & powershell -ExecutionPolicy Bypass -File (Join-Path $root "make-package.ps1")
 
     $repoExists = (Invoke-QuietNative { & $gh repo view "$RepoOwner/$RepoName" }) -eq 0
 

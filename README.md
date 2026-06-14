@@ -40,6 +40,8 @@ Or publish everything through GitHub CLI:
 powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
 ```
 
+The package includes `cmdlab.exe` and its `_internal` runtime folder, so users do not need Python installed.
+
 Upload this file somewhere public:
 
 ```txt
