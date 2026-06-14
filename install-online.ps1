@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # Upload dist/command-lab.zip to this repository's GitHub Releases.
-$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-screen-20260614"
+$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-v030-20260614"
 
 $InstallDir = Join-Path $env:LOCALAPPDATA "NghiaPCToolkit"
 $TempDir = Join-Path $env:TEMP ("command-lab-install-" + [guid]::NewGuid().ToString("N"))

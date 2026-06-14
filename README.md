@@ -46,11 +46,16 @@ dashboard          Quick health summary
 system             OS, CPU, RAM, user, admin state
 disk               Drive usage and free-space warnings
 network            Local IP, DNS and connectivity checks
+wifi               Wi-Fi status and saved profile names
+wifi settings      Open Windows Wi-Fi settings
 ports host port    TCP port check, for example: ports github.com 443
+apps [name]        Search installed Start Menu apps
+open <app>         Open apps/settings/folders, for example: open chrome
 processes [n]      Top processes by memory
-temp               Scan temp folders and estimate cleanable size
+temp / junk        Scan temp and browser cache folders
 cleanup            Dry-run cleanup report
-cleanup --apply    Delete temp files after typing DELETE
+cleanup --apply    Delete temp/cache files after typing DELETE
+recycle --empty    Empty Recycle Bin after typing EMPTY
 startup            List user startup-folder items
 path               Show PATH entries
 report             Save a desktop diagnostic report
@@ -58,6 +63,7 @@ theme              carbon, graphite, matrix
 ```
 
 Cleanup is safe by default: it does not delete anything unless `cleanup --apply` is used and the user types `DELETE`.
+The Wi-Fi command shows connection status and saved profile names only; it does not display saved Wi-Fi passwords.
 
 ## Publish
 
@@ -78,7 +84,7 @@ The package includes `pctool.exe` and its `_internal` runtime folder, so users d
 The installer currently downloads:
 
 ```txt
-https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-screen-20260614
+https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-v030-20260614
 ```
 
 ## Local Run

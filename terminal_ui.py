@@ -23,7 +23,7 @@ from typing import Callable
 
 APP_NAME = "Nghia PC Toolkit"
 APP_COMMAND = "pctool"
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.3.0"
 
 ESC = "\033["
 RESET = f"{ESC}0m"
@@ -54,7 +54,7 @@ def strip_ansi(value: str) -> str:
 
 
 def visible_len(value: str) -> int:
-    return len(strip_ansi(value))
+    return len(strip_ansi(value).replace("\r", " ").replace("\n", " "))
 
 
 def pad(value: str, width: int) -> str:
@@ -62,6 +62,7 @@ def pad(value: str, width: int) -> str:
 
 
 def shorten(value: str, width: int) -> str:
+    value = value.replace("\r", " ").replace("\n", " ")
     plain = strip_ansi(value)
     if len(plain) <= width:
         return value
@@ -186,6 +187,13 @@ class TempScan:
     errors: int
 
 
+@dataclass(frozen=True)
+class AppEntry:
+    name: str
+    path: Path
+    kind: str
+
+
 class PCToolkit:
     def __init__(self) -> None:
         self.theme = THEMES["carbon"]
@@ -207,10 +215,18 @@ class PCToolkit:
             "netword": self.cmd_network,
             "ports": self.cmd_ports,
             "port": self.cmd_ports,
+            "wifi": self.cmd_wifi,
+            "apps": self.cmd_apps,
+            "app": self.cmd_apps,
+            "open": self.cmd_open,
+            "launch": self.cmd_open,
             "processes": self.cmd_processes,
             "ps": self.cmd_processes,
             "temp": self.cmd_temp,
+            "junk": self.cmd_temp,
+            "clean": self.cmd_cleanup,
             "cleanup": self.cmd_cleanup,
+            "recycle": self.cmd_recycle,
             "startup": self.cmd_startup,
             "path": self.cmd_path,
             "report": self.cmd_report,
@@ -295,9 +311,10 @@ class PCToolkit:
             return
         width = min(self.panel_width(), 88)
         frames = ("[=       ]", "[===     ]", "[=====   ]", "[======= ]", "[========]")
+        colors = ("accent", "accent_2", "success", "warning", "accent")
         text = shorten(label, 42)
-        for frame in frames:
-            line = self.color(frame, "accent_2", bold=True) + self.color(f" loading {text}", "muted")
+        for frame, color in zip(frames, colors):
+            line = self.color(frame, color, bold=True) + self.color(f" loading {text}", "muted")
             print("\r" + pad(line, width), end="", flush=True)
             time.sleep(0.035)
         print("\r" + (" " * width) + "\r", end="", flush=True)
@@ -305,16 +322,18 @@ class PCToolkit:
 
     def render_banner(self) -> None:
         art = [
-            r" _   _       _     _        ____   ____   _____           _ _    _ _",
-            r"| \ | | __ _| |__ (_) __ _ |  _ \ / ___| |_   _|__   ___ | | | _(_) |_",
-            r"|  \| |/ _` | '_ \| |/ _` || |_) | |       | |/ _ \ / _ \| | |/ / | __|",
-            r"| |\  | (_| | | | | | (_| ||  __/| |___    | | (_) | (_) | |   <| | |_",
-            r"|_| \_|\__, |_| |_|_|\__, ||_|    \____|   |_|\___/ \___/|_|_|\_\_|\__|",
-            r"       |___/         |___/",
+            r" _   _  ____ _   _ ___    _       ____   ____",
+            r"| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|",
+            r"|  \| | |  _| |_| || |  / _ \    | |_) | |",
+            r"| |\  | |_| |  _  || | / ___ \   |  __/| |___",
+            r"|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|",
+            r"                 T O O L K I T",
         ]
         print(self.color(self.line("."), "muted"))
-        for row in art:
-            print(self.color(row, "accent", bold=True))
+        colors = ("accent", "accent_2", "success", "accent_2", "accent", "warning")
+        for index, row in enumerate(art):
+            print(self.color(row, colors[index % len(colors)], bold=True))
+        print(self.color(":: NGHIA PC TOOLKIT ::", "fg", bold=True))
         print(self.color(f"{APP_NAME} v{APP_VERSION} - Windows diagnostics and maintenance CLI", "muted"))
         print(self.color(self.line("."), "muted"))
         print()
@@ -386,11 +405,16 @@ class PCToolkit:
             self.command_row("system", "OS, CPU, RAM, user, admin state"),
             self.command_row("disk", "Drive usage and free-space warnings"),
             self.command_row("network", "Local IP, DNS, gateway-style connectivity checks"),
+            self.command_row("wifi", "Wi-Fi status and saved profile names"),
+            self.command_row("wifi settings", "Open Windows Wi-Fi settings"),
             self.command_row("ports host port", "Test TCP connectivity, example: ports github.com 443"),
+            self.command_row("apps [name]", "Search installed Start Menu apps"),
+            self.command_row("open <app>", "Open an installed app, example: open chrome"),
             self.command_row("processes [n]", "Show top running processes by memory"),
-            self.command_row("temp", "Scan safe temp folders and estimate cleanable size"),
+            self.command_row("temp / junk", "Scan temp and browser cache folders"),
             self.command_row("cleanup", "Dry-run cleanup report"),
-            self.command_row("cleanup --apply", "Delete temp files after explicit confirmation"),
+            self.command_row("cleanup --apply", "Delete temp/cache files after confirmation"),
+            self.command_row("recycle --empty", "Empty Recycle Bin after confirmation"),
             self.command_row("startup", "List user startup-folder items"),
             self.command_row("path", "Show PATH entries"),
             self.command_row("report", "Write a desktop diagnostic report"),
@@ -419,9 +443,9 @@ class PCToolkit:
             self.kv("Memory", self.memory_summary(memory)),
             self.kv("Disk", disk_warning),
             self.kv("Network", local_ip),
-            self.kv("Temp files", f"{human_bytes(temp_scan.bytes_total)} across {temp_scan.files} files"),
+            self.kv("Junk files", f"{human_bytes(temp_scan.bytes_total)} across {temp_scan.files} files"),
         ]
-        self.write_panel("Dashboard", rows, footer="Run: system | disk | network | temp | report")
+        self.write_panel("Dashboard", rows, footer="Run: system | disk | network | wifi | apps | cleanup | report")
 
     def kv(self, key: str, value: str) -> str:
         display = shorten(value, 92)
@@ -591,6 +615,84 @@ class PCToolkit:
     def status_text(self, ok: bool, value: str) -> str:
         return self.color(value, "success" if ok else "danger", bold=ok)
 
+    def wifi_interfaces(self) -> dict[str, str]:
+        code, output = run_capture(["netsh", "wlan", "show", "interfaces"], timeout=8)
+        if code != 0 or not output:
+            return {"status": " ".join((output or "Wi-Fi command unavailable").split())}
+
+        wanted = {
+            "name": "Name",
+            "state": "State",
+            "ssid": "SSID",
+            "signal": "Signal",
+            "radio type": "Radio",
+            "authentication": "Auth",
+            "channel": "Channel",
+            "receive rate (mbps)": "Rx",
+            "transmit rate (mbps)": "Tx",
+        }
+        result: dict[str, str] = {}
+        for line in output.splitlines():
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            key = key.strip().lower()
+            value = value.strip()
+            if key in wanted and value:
+                result[wanted[key]] = value
+        return result or {"status": "No active Wi-Fi interface found"}
+
+    def wifi_profiles(self) -> tuple[list[str], str]:
+        code, output = run_capture(["netsh", "wlan", "show", "profiles"], timeout=8)
+        if code != 0:
+            return [], output or "Could not read Wi-Fi profiles"
+
+        profiles: list[str] = []
+        for line in output.splitlines():
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            key = key.strip().lower()
+            name = value.strip()
+            if name and "profile" in key and "profiles on interface" not in key:
+                profiles.append(name)
+        return sorted(set(profiles), key=str.lower), ""
+
+    def cmd_wifi(self, args: list[str]) -> None:
+        if args and args[0].lower() in {"open", "settings", "setting"}:
+            ok, message = self.launch_uri("ms-settings:network-wifi")
+            rows = [self.kv("Wi-Fi Settings", self.status_text(ok, message))]
+            self.write_panel("Wi-Fi", rows)
+            return
+
+        info = self.wifi_interfaces()
+        profiles, profile_error = self.wifi_profiles()
+        if "status" in info:
+            rows = [
+                self.kv("Status", info["status"]),
+                self.kv("Profiles", str(len(profiles)) if profiles else profile_error or "none"),
+            ]
+        else:
+            rows = [
+                self.kv("Interface", info.get("Name", "unavailable")),
+                self.kv("State", info.get("State", "unknown")),
+                self.kv("SSID", info.get("SSID", "not connected")),
+                self.kv("Signal", info.get("Signal", "unknown")),
+                self.kv("Radio", info.get("Radio", "unknown")),
+                self.kv("Auth", info.get("Auth", "unknown")),
+                self.kv("Profiles", str(len(profiles)) if profiles else profile_error or "none"),
+            ]
+        if profiles:
+            rows.append("")
+            rows.extend(self.color(name, "accent_2") for name in profiles[:18])
+            if len(profiles) > 18:
+                rows.append(self.color(f"... {len(profiles) - 18} more", "muted"))
+        self.write_panel(
+            "Wi-Fi",
+            rows,
+            footer="Use wifi settings to open Windows Wi-Fi. Saved passwords are not displayed.",
+        )
+
     def tcp_check(self, host: str, port: int, timeout: int = 4) -> bool:
         try:
             with socket.create_connection((host, port), timeout=timeout):
@@ -682,8 +784,65 @@ class PCToolkit:
             roots.append(windows_temp)
         return roots
 
+    def browser_cache_roots(self) -> list[Path]:
+        roots: list[Path] = []
+        local_env = os.environ.get("LOCALAPPDATA")
+        roaming_env = os.environ.get("APPDATA")
+        local = Path(local_env) if local_env else None
+        roaming = Path(roaming_env) if roaming_env else None
+
+        chromium_bases: list[Path] = []
+        if local:
+            chromium_bases = [
+                local / "Google" / "Chrome" / "User Data",
+                local / "Microsoft" / "Edge" / "User Data",
+                local / "BraveSoftware" / "Brave-Browser" / "User Data",
+                local / "CocCoc" / "Browser" / "User Data",
+            ]
+        cache_names = ("Cache", "Code Cache", "GPUCache", "ShaderCache", "GrShaderCache")
+        for base in chromium_bases:
+            if not base.exists():
+                continue
+            profiles = [base / "Default"] + sorted(base.glob("Profile *"))
+            for profile in profiles:
+                for name in cache_names:
+                    path = profile / name
+                    if path.exists() and path not in roots:
+                        roots.append(path)
+
+        firefox_profiles = local / "Mozilla" / "Firefox" / "Profiles" if local else None
+        if firefox_profiles and firefox_profiles.exists():
+            for profile in firefox_profiles.iterdir():
+                for name in ("cache2", "startupCache"):
+                    path = profile / name
+                    if path.exists() and path not in roots:
+                        roots.append(path)
+
+        app_cache_roots: list[Path] = []
+        if roaming:
+            app_cache_roots = [
+                roaming / "discord" / "Cache",
+                roaming / "discord" / "Code Cache",
+                roaming / "discord" / "GPUCache",
+                roaming / "Code" / "Cache",
+                roaming / "Code" / "CachedData",
+                roaming / "Code" / "Code Cache",
+            ]
+        for path in app_cache_roots:
+            if path.exists() and path not in roots:
+                roots.append(path)
+
+        return roots
+
+    def junk_roots(self) -> list[Path]:
+        roots: list[Path] = []
+        for path in self.temp_roots() + self.browser_cache_roots():
+            if path.exists() and path not in roots:
+                roots.append(path)
+        return roots
+
     def scan_temp(self, max_items: int = 120000) -> TempScan:
-        roots = self.temp_roots()
+        roots = self.junk_roots()
         files = 0
         dirs = 0
         bytes_total = 0
@@ -706,14 +865,18 @@ class PCToolkit:
     def cmd_temp(self, _: list[str]) -> None:
         scan = self.scan_temp()
         self.last_temp_scan = scan
+        temp_count = len(self.temp_roots())
+        cache_count = len(self.browser_cache_roots())
         rows = [
-            self.kv("Folders", ", ".join(str(root) for root in scan.roots) or "none"),
+            self.kv("Targets", f"{len(scan.roots)} safe folders"),
+            self.kv("Temp folders", str(temp_count)),
+            self.kv("Cache folders", str(cache_count)),
             self.kv("Files", str(scan.files)),
             self.kv("Subfolders", str(scan.dirs)),
             self.kv("Estimated size", human_bytes(scan.bytes_total)),
             self.kv("Access errors", str(scan.errors)),
         ]
-        self.write_panel("Temp Scan", rows, footer="Run cleanup for dry-run, or cleanup --apply to delete after confirmation.")
+        self.write_panel("Junk Scan", rows, footer="Run cleanup for dry-run, or cleanup --apply to delete after confirmation.")
 
     def cmd_cleanup(self, args: list[str]) -> None:
         apply = "--apply" in args or "-y" in args
@@ -728,10 +891,14 @@ class PCToolkit:
                 self.kv("Estimated size", human_bytes(scan.bytes_total)),
                 self.kv("Errors", str(scan.errors)),
             ]
-            self.write_panel("Cleanup Preview", rows, footer="Nothing was deleted. Use cleanup --apply and type DELETE to confirm.")
+            self.write_panel(
+                "Cleanup Preview",
+                rows,
+                footer="Nothing was deleted. Use cleanup --apply and type DELETE to confirm.",
+            )
             return
 
-        print(self.color("This will delete files inside temp folders only.", "warning", bold=True))
+        print(self.color("This will delete files inside temp/cache folders only.", "warning", bold=True))
         confirm = input(self.color("Type DELETE to continue: ", "danger", bold=True)).strip()
         if confirm != "DELETE":
             print(self.color("Cleanup cancelled.", "muted"))
@@ -763,6 +930,215 @@ class PCToolkit:
             self.kv("Skipped/errors", str(errors)),
         ]
         self.write_panel("Cleanup Complete", rows)
+
+    def app_roots(self) -> list[Path]:
+        roots: list[Path] = []
+        candidates = [Path.home() / "Desktop"]
+        appdata = os.environ.get("APPDATA")
+        programdata = os.environ.get("PROGRAMDATA")
+        public = os.environ.get("PUBLIC")
+        if appdata:
+            candidates.append(Path(appdata) / "Microsoft" / "Windows" / "Start Menu" / "Programs")
+        if programdata:
+            candidates.append(Path(programdata) / "Microsoft" / "Windows" / "Start Menu" / "Programs")
+        if public:
+            candidates.append(Path(public) / "Desktop")
+        for path in candidates:
+            if path.exists() and path not in roots:
+                roots.append(path)
+        return roots
+
+    def discover_apps(self, query: str = "", limit: int = 120) -> list[AppEntry]:
+        allowed = {
+            ".lnk": "shortcut",
+            ".appref-ms": "app",
+            ".url": "url",
+            ".cmd": "command",
+            ".bat": "command",
+        }
+        needle = query.casefold().strip()
+        entries: list[AppEntry] = []
+        seen: set[str] = set()
+        for root in self.app_roots():
+            for current, _, filenames in os.walk(root):
+                for filename in filenames:
+                    path = Path(current) / filename
+                    suffix = path.suffix.lower()
+                    if suffix not in allowed:
+                        continue
+                    key = str(path).casefold()
+                    if key in seen:
+                        continue
+                    name = path.stem.replace(" - Shortcut", "").strip()
+                    searchable = name.casefold()
+                    if needle and needle not in searchable:
+                        continue
+                    seen.add(key)
+                    entries.append(AppEntry(name=name, path=path, kind=allowed[suffix]))
+
+        def score(entry: AppEntry) -> tuple[int, int, str]:
+            name = entry.name.casefold()
+            if not needle:
+                rank = 50
+            elif name == needle:
+                rank = 0
+            elif name.startswith(needle):
+                rank = 1
+            elif needle in name:
+                rank = 2
+            else:
+                rank = 3
+            return rank, len(entry.name), entry.name.casefold()
+
+        entries.sort(key=score)
+        return entries[:limit]
+
+    def app_row(self, entry: AppEntry) -> str:
+        name = self.color(shorten(entry.name, 34).ljust(36), "accent_2", bold=True)
+        kind = self.color(entry.kind.ljust(9), "muted")
+        return f"{name} {kind} {self.color(str(entry.path), 'fg')}"
+
+    def cmd_apps(self, args: list[str]) -> None:
+        query = " ".join(args).strip()
+        apps = self.discover_apps(query)
+        rows = [self.app_row(app) for app in apps[:24]]
+        if not rows:
+            message = f"No Start Menu apps matched: {query}" if query else "No Start Menu apps found."
+            rows = [message]
+        elif len(apps) > 24:
+            rows.append(self.color(f"... {len(apps) - 24} more", "muted"))
+        title = "Apps" if not query else f"Apps: {query}"
+        self.write_panel(title, rows, footer="Use open <app name> to launch the best match.")
+
+    def launch_uri(self, uri: str) -> tuple[bool, str]:
+        try:
+            if os.name == "nt":
+                os.startfile(uri)  # type: ignore[attr-defined]
+            else:
+                subprocess.Popen(["xdg-open", uri], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, "opened"
+        except Exception as exc:
+            return False, str(exc)
+
+    def launch_path(self, path: Path) -> tuple[bool, str]:
+        try:
+            if os.name == "nt":
+                os.startfile(str(path))  # type: ignore[attr-defined]
+            else:
+                subprocess.Popen(["xdg-open", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, "opened"
+        except Exception as exc:
+            return False, str(exc)
+
+    def launch_command(self, command: list[str]) -> tuple[bool, str]:
+        try:
+            subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True, "opened"
+        except Exception as exc:
+            return False, str(exc)
+
+    def cmd_open(self, args: list[str]) -> None:
+        if not args:
+            self.error("Usage: open <app/settings/folder>")
+            return
+
+        target = " ".join(args).strip()
+        key = target.casefold()
+        quick_paths: dict[str, Path] = {
+            "downloads": Path.home() / "Downloads",
+            "download": Path.home() / "Downloads",
+            "desktop": Path.home() / "Desktop",
+            "temp": Path(tempfile.gettempdir()),
+            "startup": Path(os.environ.get("APPDATA", ""))
+            / "Microsoft"
+            / "Windows"
+            / "Start Menu"
+            / "Programs"
+            / "Startup",
+        }
+        quick_uris = {
+            "settings": "ms-settings:",
+            "setting": "ms-settings:",
+            "wifi": "ms-settings:network-wifi",
+            "wi-fi": "ms-settings:network-wifi",
+            "network": "ms-settings:network",
+            "apps": "ms-settings:appsfeatures",
+        }
+        quick_commands = {
+            "control": ["control"],
+            "control panel": ["control"],
+            "taskmgr": ["taskmgr"],
+            "task manager": ["taskmgr"],
+            "explorer": ["explorer"],
+        }
+
+        if key in quick_paths:
+            ok, message = self.launch_path(quick_paths[key])
+            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            return
+        if key in quick_uris:
+            ok, message = self.launch_uri(quick_uris[key])
+            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            return
+        if key in quick_commands:
+            ok, message = self.launch_command(quick_commands[key])
+            self.write_panel("Open", [self.kv(target, self.status_text(ok, message))])
+            return
+
+        matches = self.discover_apps(target, limit=10)
+        if not matches:
+            self.write_panel(
+                "Open",
+                [self.color(f"No app matched: {target}", "danger", bold=True)],
+                footer="Try apps <name> to search Start Menu shortcuts.",
+            )
+            return
+
+        selected = matches[0]
+        ok, message = self.launch_path(selected.path)
+        rows = [
+            self.kv("App", selected.name),
+            self.kv("Type", selected.kind),
+            self.kv("Result", self.status_text(ok, message)),
+        ]
+        if len(matches) > 1:
+            rows.append("")
+            rows.append(self.color("Other matches:", "muted"))
+            rows.extend(self.color(match.name, "accent_2") for match in matches[1:6])
+        self.write_panel("Open", rows, footer=str(selected.path))
+
+    def cmd_recycle(self, args: list[str]) -> None:
+        if "--empty" not in args:
+            self.write_panel(
+                "Recycle Bin",
+                [
+                    self.kv("Mode", "preview"),
+                    "This command can empty the Windows Recycle Bin.",
+                    "Run recycle --empty and type EMPTY to confirm.",
+                ],
+                footer="No files were deleted.",
+            )
+            return
+
+        if os.name != "nt":
+            self.write_panel("Recycle Bin", ["Recycle Bin cleanup is currently Windows-only."])
+            return
+
+        print(self.color("This will empty the Windows Recycle Bin.", "warning", bold=True))
+        confirm = input(self.color("Type EMPTY to continue: ", "danger", bold=True)).strip()
+        if confirm != "EMPTY":
+            print(self.color("Recycle Bin cleanup cancelled.", "muted"))
+            return
+
+        flags = 0x00000001 | 0x00000002 | 0x00000004
+        try:
+            result = ctypes.windll.shell32.SHEmptyRecycleBinW(None, None, flags)
+            ok = result == 0
+            message = "emptied" if ok else f"failed: HRESULT {result}"
+        except Exception as exc:
+            ok = False
+            message = str(exc)
+        self.write_panel("Recycle Bin", [self.kv("Result", self.status_text(ok, message))])
 
     def cmd_startup(self, _: list[str]) -> None:
         startup = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
@@ -815,7 +1191,7 @@ class PCToolkit:
                 f"Local IP: {self.local_ip()}",
                 f"GitHub 443: {'ok' if self.tcp_check('github.com', 443) else 'failed'}",
                 "",
-                "[Temp]",
+                "[Junk]",
                 f"Roots: {', '.join(str(root) for root in temp_scan.roots)}",
                 f"Files: {temp_scan.files}",
                 f"Estimated size: {human_bytes(temp_scan.bytes_total)}",
