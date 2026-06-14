@@ -453,9 +453,8 @@ class PCToolkit:
 
     def interactive_menu(self) -> str | None:
         """
-        Show an interactive arrow-key menu.
+        Show an interactive arrow-key menu using full-screen clear+redraw.
         Returns the selected command string, or None if user pressed ESC.
-        Uses cursor save/restore (\033[s / \033[u) for reliable in-place redraw.
         """
         if not _HAS_MSVCRT:
             # Fallback: numbered list for non-Windows
@@ -476,11 +475,13 @@ class PCToolkit:
         selected = 0
         total = len(self.MENU_ITEMS)
 
-        # Hide cursor, save position
-        print("\033[?25l", end="", flush=True)
-        print("\033[s", end="", flush=True)   # save cursor position
+        print("\033[?25l", end="", flush=True)  # hide cursor
         try:
+            # Initial draw
+            clear()
+            self.render_banner()
             self._render_menu(selected)
+
             while True:
                 key = self._read_key()
                 if key == "up":
@@ -488,33 +489,45 @@ class PCToolkit:
                 elif key == "down":
                     selected = (selected + 1) % total
                 elif key == "enter":
-                    cmd = self.MENU_ITEMS[selected][1]
-                    # Restore cursor and clear menu
-                    print("\033[u\033[J", end="", flush=True)
-                    return cmd
+                    return self.MENU_ITEMS[selected][1]
                 elif key == "esc":
-                    print("\033[u\033[J", end="", flush=True)
+                    # ESC -> text input mode
+                    clear()
+                    self.render_banner()
                     return None
                 elif key:
-                    # Printable char typed -> clear menu, enter text mode
-                    print("\033[u\033[J", end="", flush=True)
+                    # Printable char typed -> text mode pre-seeded
+                    clear()
+                    self.render_banner()
                     try:
                         rest = input(self.prompt() + key).strip()
                         return key + rest
                     except (EOFError, KeyboardInterrupt):
                         return "exit"
-                # Redraw menu from saved cursor position
-                print("\033[u", end="", flush=True)
+                # Redraw: clear + banner + menu
+                clear()
+                self.render_banner()
                 self._render_menu(selected)
         finally:
             print("\033[?25h", end="", flush=True)  # restore cursor
+
+    def _wait_key(self) -> None:
+        """After showing a command result, wait for any key before returning to menu."""
+        print()
+        print(self.color("  Press any key to return to menu...", "muted"))
+        if _HAS_MSVCRT:
+            _msvcrt.getwch()
+        else:
+            try:
+                input()
+            except (EOFError, KeyboardInterrupt):
+                pass
 
     def loop(self) -> None:
         self.boot()
 
         while self.running:
             try:
-                print()
                 result = self.interactive_menu()
             except KeyboardInterrupt:
                 print()
@@ -522,7 +535,7 @@ class PCToolkit:
                 break
 
             if result is None:
-                # ESC pressed -> text input mode
+                # ESC -> text input mode (banner already drawn)
                 try:
                     raw = input(self.prompt()).strip()
                 except (EOFError, KeyboardInterrupt):
@@ -533,12 +546,16 @@ class PCToolkit:
                     continue
                 self.history.append(raw)
                 self.dispatch(raw)
+                if self.running:
+                    self._wait_key()
             else:
                 raw = result.strip()
                 if not raw:
                     continue
                 self.history.append(raw)
                 self.dispatch(raw)
+                if self.running:
+                    self._wait_key()
 
     def dispatch(self, raw: str) -> None:
         try:
