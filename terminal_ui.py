@@ -23,7 +23,7 @@ from typing import Callable
 
 APP_NAME = "Nghia PC Toolkit"
 APP_COMMAND = "pctool"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 
 ESC = "\033["
 RESET = f"{ESC}0m"
@@ -191,6 +191,7 @@ class PCToolkit:
         self.theme = THEMES["carbon"]
         self.history: list[str] = []
         self.running = True
+        self.interactive = sys.stdin.isatty() and sys.stdout.isatty()
         self.last_temp_scan: TempScan | None = None
         self.commands: dict[str, Callable[[list[str]], None]] = {
             "help": self.cmd_help,
@@ -203,6 +204,7 @@ class PCToolkit:
             "disks": self.cmd_disk,
             "network": self.cmd_network,
             "net": self.cmd_network,
+            "netword": self.cmd_network,
             "ports": self.cmd_ports,
             "port": self.cmd_ports,
             "processes": self.cmd_processes,
@@ -257,8 +259,7 @@ class PCToolkit:
         print(border)
 
     def boot(self) -> None:
-        clear()
-        self.render_banner()
+        self.render_screen("dashboard", animate=True)
         self.cmd_dashboard([])
         print()
         print(
@@ -268,6 +269,38 @@ class PCToolkit:
             + self.color("help", "accent_2", bold=True)
             + self.color(" to see tools.", "muted")
         )
+        print()
+
+    def render_screen(self, label: str | None = None, *, animate: bool = False) -> None:
+        clear()
+        self.render_banner()
+        if label:
+            self.render_context(label)
+        if animate:
+            self.scan_effect(label or "ready")
+
+    def render_context(self, label: str) -> None:
+        width = self.panel_width()
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        machine = socket.gethostname()
+        left = self.color(" command ", "muted") + self.color(shorten(label, 54), "accent_2", bold=True)
+        right = self.color(f"{machine} / {timestamp}", "muted")
+        gap = " " * max(1, width - visible_len(left) - visible_len(right))
+        print(left + gap + right)
+        print(self.color(self.line("."), "muted"))
+        print()
+
+    def scan_effect(self, label: str) -> None:
+        if not self.interactive:
+            return
+        width = min(self.panel_width(), 88)
+        frames = ("[=       ]", "[===     ]", "[=====   ]", "[======= ]", "[========]")
+        text = shorten(label, 42)
+        for frame in frames:
+            line = self.color(frame, "accent_2", bold=True) + self.color(f" loading {text}", "muted")
+            print("\r" + pad(line, width), end="", flush=True)
+            time.sleep(0.035)
+        print("\r" + (" " * width) + "\r", end="", flush=True)
         print()
 
     def render_banner(self) -> None:
@@ -316,6 +349,7 @@ class PCToolkit:
         try:
             parts = shlex.split(raw)
         except ValueError as exc:
+            self.render_screen("parse error", animate=True)
             self.error(f"Cannot parse command: {exc}")
             return
 
@@ -323,9 +357,22 @@ class PCToolkit:
         args = parts[1:]
         handler = self.commands.get(command)
 
+        if command in ("exit", "quit"):
+            handler(args) if handler else self.cmd_exit([])
+            return
+
+        if command == "clear":
+            self.cmd_clear(args)
+            return
+
+        if command == "theme" and args:
+            handler(args) if handler else self.error(f"Unknown command: {command}")
+            return
+
+        self.render_screen(raw, animate=True)
+
         if handler is None:
             self.error(f"Unknown command: {command}")
-            print(self.color("Try: help", "muted"))
             return
 
         handler(args)
@@ -340,7 +387,7 @@ class PCToolkit:
             self.command_row("disk", "Drive usage and free-space warnings"),
             self.command_row("network", "Local IP, DNS, gateway-style connectivity checks"),
             self.command_row("ports host port", "Test TCP connectivity, example: ports github.com 443"),
-            self.command_row("processes [n]", "Show top running processes from tasklist"),
+            self.command_row("processes [n]", "Show top running processes by memory"),
             self.command_row("temp", "Scan safe temp folders and estimate cleanable size"),
             self.command_row("cleanup", "Dry-run cleanup report"),
             self.command_row("cleanup --apply", "Delete temp files after explicit confirmation"),
@@ -806,12 +853,12 @@ class PCToolkit:
         name = args[0].lower()
         next_theme = THEMES.get(name)
         if not next_theme:
+            self.render_screen(f"theme {name}", animate=True)
             self.error(f"Unknown theme: {name}")
             return
         self.theme = next_theme
-        clear()
-        self.render_banner()
-        print(self.color(f"Theme switched to {name}.", "success", bold=True))
+        self.render_screen(f"theme {name}", animate=True)
+        self.write_panel("Theme", [self.kv("Active", name)])
 
     def cmd_history(self, _: list[str]) -> None:
         rows = [f"{index:02d}. {item}" for index, item in enumerate(self.history[-14:], start=1)]
@@ -833,7 +880,7 @@ class PCToolkit:
         print(self.color(f"Closed {APP_NAME}.", "muted"))
 
     def error(self, message: str) -> None:
-        print(self.color("Error: ", "danger", bold=True) + self.color(message, "fg"))
+        self.write_panel("Error", [self.color(message, "danger", bold=True)], footer="Run help to list available commands.")
 
 
 def main() -> int:

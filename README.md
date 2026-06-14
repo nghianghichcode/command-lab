@@ -2,6 +2,8 @@
 
 Interactive Windows terminal toolkit for quick diagnostics and safe maintenance.
 
+The UI uses a single-screen terminal layout: every command refreshes the screen, keeps the header/status area, and shows only the current result panel.
+
 ## Install
 
 Short install command:
@@ -76,7 +78,7 @@ The package includes `pctool.exe` and its `_internal` runtime folder, so users d
 The installer currently downloads:
 
 ```txt
-https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-20260614
+https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-screen-20260614
 ```
 
 ## Local Run
