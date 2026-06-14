@@ -284,17 +284,11 @@ class PCToolkit:
         print(border)
 
     def boot(self) -> None:
-        self.render_screen("dashboard", animate=True)
-        self.cmd_dashboard([])
-        print()
-        print(
-            self.color(APP_COMMAND, "accent", bold=True)
-            + self.color(" ready. ", "muted")
-            + self.color("Type ", "muted")
-            + self.color("help", "accent_2", bold=True)
-            + self.color(" to see tools.", "muted")
-        )
-        print()
+        # Just show the banner — the loop will immediately call interactive_menu()
+        # which does clear+banner+menu, so no need for extra text here.
+        clear()
+        self.render_banner()
+        self.scan_effect("ready")
 
     def render_screen(self, label: str | None = None, *, animate: bool = False) -> None:
         clear()

@@ -1,100 +1,144 @@
+<div align="center">
+
+```
+ _   _  ____ _   _ ___    _       ____   ____
+| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|
+|  \| | |  _| |_| || |  / _ \    | |_) | |
+| |\  | |_| |  _  || | / ___ \   |  __/| |___
+|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|
+```
+
 # Nghia PC Toolkit
 
-Interactive Windows terminal toolkit for quick diagnostics and safe maintenance.
+**Interactive Windows terminal toolkit — diagnostics, cleanup & system info at your fingertips.**
 
-The UI uses a single-screen terminal layout: every command refreshes the screen, keeps the header/status area, and shows only the current result panel.
+![Version](https://img.shields.io/badge/version-v0.4.0-56d364?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Windows-0078d4?style=flat-square&logo=windows)
+![Python](https://img.shields.io/badge/python-3.9%2B-3776ab?style=flat-square&logo=python)
+![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)
 
-## Install
+</div>
 
-Short install command:
+---
+
+## ✨ Features
+
+- 🖥️ **Arrow-key menu** — navigate with ↑/↓, no need to memorize commands
+- 📊 **Dashboard** — instant summary: RAM, disk, network, junk files
+- 🌐 **Network checks** — ping, DNS, TCP port testing
+- 📡 **Wi-Fi** — interface info and saved profiles
+- 🧹 **Safe cleanup** — temp & browser cache scanner with dry-run protection
+- 🎨 **3 themes** — Carbon, Graphite, Matrix
+- 📦 **No Python required** — ships as a single `.exe`
+
+---
+
+## ⚡ Install
+
+**One-line install** (recommended):
 
 ```powershell
 powershell -c "irm https://github.com/nghianghichcode/command-lab/raw/main/i.ps1|iex"
 ```
 
-Fallback install command:
+> Downloads the latest release, installs to `%LOCALAPPDATA%\NghiaPCToolkit`,  
+> adds it to your user `PATH`, and launches the tool automatically.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/nghianghichcode/command-lab/main/install-online.ps1 | iex"
+**After installing**, open a new terminal and run:
+
 ```
-
-The installer downloads the release zip, installs the app into `%LOCALAPPDATA%\NghiaPCToolkit`, adds the folder to the user `PATH`, and opens the tool once.
-
-After installing, open a new terminal and run:
-
-```bat
 pctool
 ```
 
-Open it in a new terminal window:
+Or open in its own window:
 
-```bat
+```
 pctool-window
 ```
 
-Legacy aliases are kept for old installs:
+---
 
-```bat
-cmdlab
-cmdlab-window
+## 🧰 Commands
+
+> The tool shows an **interactive menu** on startup — use arrow keys to navigate and Enter to select.  
+> You can also type any command directly.
+
+| Command | Description |
+|---|---|
+| `dashboard` | Quick health summary — RAM, disk, network, junk |
+| `system` | OS, CPU, RAM, user, admin state |
+| `disk` | Drive usage with free-space warnings |
+| `network` | Local IP, DNS resolution, ping & port checks |
+| `wifi` | Wi-Fi status and saved profile names |
+| `wifi settings` | Open Windows Wi-Fi settings |
+| `ports <host> <port>` | TCP connectivity test — e.g. `ports github.com 443` |
+| `apps [name]` | Search installed Start Menu apps |
+| `open <app>` | Open an app/folder/setting — e.g. `open chrome` |
+| `processes [n]` | Top processes sorted by memory usage |
+| `temp` / `junk` | Scan temp folders and browser caches |
+| `cleanup` | Dry-run cleanup report (nothing deleted) |
+| `cleanup --apply` | Delete temp/cache files after typing `DELETE` |
+| `recycle --empty` | Empty Recycle Bin after typing `EMPTY` |
+| `startup` | List user startup-folder items |
+| `path` | Show all PATH entries |
+| `report` | Save a full diagnostic report to Desktop |
+| `theme` | Switch theme: `carbon`, `graphite`, `matrix` |
+| `history` | Show recent commands |
+| `clear` | Redraw the screen |
+| `exit` | Close the tool |
+
+> 🔒 **Cleanup is safe by default.** Nothing is deleted without `--apply` and explicit confirmation.
+
+---
+
+## 🎨 Themes
+
+| Theme | Description |
+|---|---|
+| `carbon` | Dark blue — default |
+| `graphite` | Warm amber |
+| `matrix` | Green-on-black |
+
+```
+theme carbon
+theme graphite
+theme matrix
 ```
 
-## Tools
+---
 
-```txt
-dashboard          Quick health summary
-system             OS, CPU, RAM, user, admin state
-disk               Drive usage and free-space warnings
-network            Local IP, DNS and connectivity checks
-wifi               Wi-Fi status and saved profile names
-wifi settings      Open Windows Wi-Fi settings
-ports host port    TCP port check, for example: ports github.com 443
-apps [name]        Search installed Start Menu apps
-open <app>         Open apps/settings/folders, for example: open chrome
-processes [n]      Top processes by memory
-temp / junk        Scan temp and browser cache folders
-cleanup            Dry-run cleanup report
-cleanup --apply    Delete temp/cache files after typing DELETE
-recycle --empty    Empty Recycle Bin after typing EMPTY
-startup            List user startup-folder items
-path               Show PATH entries
-report             Save a desktop diagnostic report
-theme              carbon, graphite, matrix
-```
+## 🛠️ Build & Publish
 
-Cleanup is safe by default: it does not delete anything unless `cleanup --apply` is used and the user types `DELETE`.
-The Wi-Fi command shows connection status and saved profile names only; it does not display saved Wi-Fi passwords.
-
-## Publish
-
-Build the bundled executable and release zip:
+Build a standalone `.exe`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\make-package.ps1
 ```
 
-Publish source and release through GitHub CLI:
+Publish source + GitHub Release:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
 ```
 
-The package includes `pctool.exe` and its `_internal` runtime folder, so users do not need Python installed.
+Run directly without building:
 
-The installer currently downloads:
-
-```txt
-https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=pctool-v030-20260614
-```
-
-## Local Run
-
-```bat
-run.cmd
-```
-
-or:
-
-```bat
+```powershell
 python -B terminal_ui.py
 ```
+
+---
+
+## 📋 Requirements
+
+- Windows 10 / 11
+- No Python needed when using the `.exe`
+- Python 3.9+ if running from source
+
+---
+
+<div align="center">
+
+Made with ❤️ by [nghianghichcode](https://github.com/nghianghichcode)
+
+</div>
