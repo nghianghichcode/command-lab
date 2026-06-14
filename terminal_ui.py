@@ -185,6 +185,28 @@ THEMES: dict[str, Theme] = {
         danger=(255, 118, 118),
         panel_alt=(20, 38, 27),
     ),
+    "dracula": Theme(
+        "dracula",
+        fg=(248, 248, 242),
+        muted=(98, 114, 164),
+        accent=(189, 147, 249),
+        accent_2=(255, 121, 198),
+        success=(80, 250, 123),
+        warning=(241, 250, 140),
+        danger=(255, 85, 85),
+        panel_alt=(40, 42, 54),
+    ),
+    "cyberpunk": Theme(
+        "cyberpunk",
+        fg=(253, 253, 253),
+        muted=(150, 150, 150),
+        accent=(255, 0, 85),
+        accent_2=(0, 255, 255),
+        success=(0, 255, 153),
+        warning=(255, 204, 0),
+        danger=(255, 51, 51),
+        panel_alt=(20, 20, 30),
+    ),
 }
 
 
@@ -1547,27 +1569,69 @@ class PCToolkit:
         self.error(f"Không thể xuất báo cáo: {last_error}")
 
     def cmd_theme(self, args: list[str]) -> None:
-        if not args:
-            rows = []
-            for name in THEMES:
-                marker = "*" if name == self.theme.name else " "
-                rows.append(
-                    f"{self.color(marker, 'accent')} "
-                    + self.color(name.ljust(10), "accent_2", bold=name == self.theme.name)
-                    + self.color(f"theme {name}", "muted")
-                )
-            self.write_panel("Giao Diện", rows, footer="Gõ: theme carbon | theme graphite | theme matrix")
+        if args:
+            name = args[0].lower()
+            next_theme = THEMES.get(name)
+            if not next_theme:
+                self.render_screen(f"theme {name}", animate=True)
+                self.error(f"Không có giao diện này: {name}")
+                return
+            self.theme = next_theme
+            self.render_screen(f"theme {name}", animate=True)
+            self.write_panel("Giao Diện", [self.kv("Đang dùng", name)])
             return
 
-        name = args[0].lower()
-        next_theme = THEMES.get(name)
-        if not next_theme:
-            self.render_screen(f"theme {name}", animate=True)
-            self.error(f"Không có giao diện này: {name}")
-            return
-        self.theme = next_theme
-        self.render_screen(f"theme {name}", animate=True)
-        self.write_panel("Giao Diện", [self.kv("Đang dùng", name)])
+        theme_names = list(THEMES.keys())
+        try:
+            selected = theme_names.index(self.theme.name)
+        except ValueError:
+            selected = 0
+            
+        total = len(theme_names)
+        
+        print("\033[?25l", end="", flush=True)  # hide cursor
+        try:
+            if os.name == "nt":
+                os.system("cls")
+            else:
+                clear()
+                
+            while True:
+                print("\033[1;1H", end="", flush=True)
+                self.render_banner()
+                self.render_context("theme")
+                
+                rows = []
+                for i, name in enumerate(theme_names):
+                    marker = " > " if i == selected else "   "
+                    color_mode = "accent" if i == selected else "muted"
+                    
+                    rows.append(
+                        self.color(marker, color_mode, bold=True)
+                        + self.color(name.ljust(15), "accent_2" if i == selected else "fg", bold=i == selected)
+                        + self.color(" < Đang dùng" if name == self.theme.name else "", "success")
+                    )
+                    
+                self.write_panel("Giao Diện", rows, footer="↑/↓: Chọn   Enter: Áp dụng   ESC: Quay lại")
+                print("\033[0J", end="", flush=True)
+                
+                key = self._read_key()
+                if key == "up":
+                    selected = (selected - 1) % total
+                elif key == "down":
+                    selected = (selected + 1) % total
+                elif key == "enter":
+                    name = theme_names[selected]
+                    self.theme = THEMES[name]
+                    self._skip_wait = True
+                    break
+                elif key == "esc":
+                    self._skip_wait = True
+                    break
+        finally:
+            print("\033[?25h", end="", flush=True)
+
+
 
     def cmd_history(self, _: list[str]) -> None:
         rows = [f"{index:02d}. {item}" for index, item in enumerate(self.history[-14:], start=1)]
