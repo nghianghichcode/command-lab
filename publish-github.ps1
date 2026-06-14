@@ -32,15 +32,6 @@ try {
         & powershell -ExecutionPolicy Bypass -File (Join-Path $root "make-package.ps1")
     }
 
-    $remoteUrl = "https://github.com/$RepoOwner/$RepoName.git"
-    $origin = git remote get-url origin 2>$null
-
-    if (-not $origin) {
-        git remote add origin $remoteUrl
-    } elseif ($origin -ne $remoteUrl) {
-        git remote set-url origin $remoteUrl
-    }
-
     $repoExists = $true
     & $gh repo view "$RepoOwner/$RepoName" *> $null
     if ($LASTEXITCODE -ne 0) {
@@ -48,7 +39,16 @@ try {
     }
 
     if (-not $repoExists) {
-        & $gh repo create "$RepoOwner/$RepoName" --public --source "." --remote origin --description "Interactive command terminal prototype" --disable-wiki
+        & $gh repo create "$RepoOwner/$RepoName" --public --description "Interactive command terminal prototype" --disable-wiki
+    }
+
+    $remoteUrl = "https://github.com/$RepoOwner/$RepoName.git"
+    $origin = git remote get-url origin 2>$null
+
+    if (-not $origin) {
+        git remote add origin $remoteUrl
+    } elseif ($origin -ne $remoteUrl) {
+        git remote set-url origin $remoteUrl
     }
 
     git push -u origin main
