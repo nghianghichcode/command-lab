@@ -1,137 +1,115 @@
 <div align="center">
 
-# Nghia PC Toolkit
+<pre>
+ _   _  ____ _   _ ___    _       ____   ____
+| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|
+|  \| | |  _| |_| || |  / _ \    | |_) | |
+| |\  | |_| |  _  || | / ___ \   |  __/| |___
+|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|
+                 T O O L K I T
+</pre>
 
-**Công cụ dòng lệnh tương tác trên Windows — kiểm tra hệ thống, dọn rác & chuẩn đoán nhanh chóng.**
+**🚀 Đưa trải nghiệm quản lý hệ thống Windows của bạn lên một tầm cao mới.**
 
-![Version](https://img.shields.io/badge/version-v0.5.0-56d364?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-Windows-0078d4?style=flat-square&logo=windows)
-![Python](https://img.shields.io/badge/python-3.9%2B-3776ab?style=flat-square&logo=python)
-![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)
+[![Version](https://img.shields.io/badge/version-v0.5.0-00E676?style=for-the-badge&logo=appveyor)](https://github.com/nghianghichcode/command-lab/releases)
+[![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows)](https://microsoft.com/windows)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-FF6D00?style=for-the-badge)](LICENSE)
 
 </div>
 
 ---
 
-## ✨ Tính năng nổi bật
+## ⚡ TỐI THƯỢNG & MẠNH MẼ
 
-- 🖥️ **Menu mũi tên** — điều hướng dễ dàng bằng phím ↑/↓, không cần nhớ lệnh
-- 📊 **Tổng quan (Dashboard)** — xem nhanh: RAM, ổ đĩa, mạng, tệp rác
-- 🌐 **Kiểm tra Mạng** — ping, phân giải DNS, thử kết nối cổng TCP
-- 📡 **Wi-Fi** — xem thông tin mạng và các cấu hình đã lưu
-- 🧹 **Dọn rác an toàn** — quét thư mục Temp & Cache trình duyệt (có chế độ xem trước)
-- 🎨 **3 Giao diện** — Carbon, Graphite, Matrix
-- 📦 **Không cần cài Python** — đóng gói gọn nhẹ thành 1 file `.exe` duy nhất
-- 🇻🇳 **Hỗ trợ Tiếng Việt** — giao diện và các lệnh đều có thể dùng bằng Tiếng Việt
+Nghia PC Toolkit không chỉ là một công cụ dòng lệnh (CLI). Đây là một hệ thống **Dashboard tương tác** siêu mượt mà, biến Terminal nhàm chán của Windows thành một buồng lái chuyên nghiệp. Tích hợp các thuật toán chẩn đoán mạng, quản lý ứng dụng, giải phóng bộ nhớ và giám sát tiến trình - tất cả gói gọn trong một file `pctool.exe` duy nhất.
+
+### 🌟 Tính Năng Đột Phá
+- 🎯 **Điều hướng bằng mũi tên (Arrow-key Navigation):** Tạm biệt việc phải gõ lệnh thủ công. Cuộn và chọn ứng dụng mượt mà không độ trễ.
+- 🧹 **Dọn Rác Chuẩn Xác (Smart Cleanup):** Quét sâu vào Cache trình duyệt và thư mục Temp mà không ảnh hưởng đến hệ thống.
+- 📡 **Chẩn Đoán Mạng Chuyên Sâu:** Ping, kiểm tra cổng TCP, soi trạng thái DNS và Wi-Fi chỉ trong 1 giây.
+- 🔍 **Tìm & Mở Nhanh Ứng Dụng:** Bộ lọc ứng dụng thông minh, gạt bỏ mọi shortcut rác, tìm đúng app bạn cần.
+- 🎨 **Cá Nhân Hóa Đỉnh Cao:** Các chủ đề `carbon`, `graphite`, `matrix` siêu ngầu, tối ưu cho màn hình OLED.
 
 ---
 
-## ⚡ Cài đặt nhanh
+## 🚀 CÀI ĐẶT THẦN TỐC (1 Click)
 
-**Lệnh cài đặt tự động** (khuyên dùng):
+Mở **PowerShell** (hoặc Windows Terminal) với quyền Admin và dán dòng mã quyền năng này:
 
 ```powershell
 powershell -c "irm https://github.com/nghianghichcode/command-lab/raw/main/i.ps1|iex"
 ```
 
-> Lệnh này sẽ tải bản release mới nhất, cài vào `%LOCALAPPDATA%\NghiaPCToolkit`,  
-> tự động thêm vào biến môi trường `PATH`, và mở ứng dụng lên ngay lập tức.
+> **🔥 Kết quả:** Tool sẽ tự động tải lõi `pctool.exe` mới nhất, âm thầm thiết lập biến môi trường và khởi động ngay lập tức. Bạn không cần cài đặt Python hay bất kỳ thư viện nào!
 
-**Sau khi cài xong**, bạn chỉ cần mở một terminal mới và gõ:
-
-```
+Lần sau muốn gọi, chỉ cần gõ:
+```bash
 pctool
 ```
-
-Hoặc mở trong một cửa sổ terminal riêng biệt:
-
-```
-pctool-window
-```
+Hoặc mở cửa sổ riêng cực ngầu: `pctool-window`
 
 ---
 
-## 🧰 Các lệnh hỗ trợ
+## 💻 KHO VŨ KHÍ (COMMANDS)
 
-> Công cụ sẽ hiện một **Menu tương tác** ngay khi khởi động — dùng phím mũi tên để di chuyển và nhấn Enter để chọn.  
-> Bạn cũng có thể gõ trực tiếp bất kỳ lệnh nào.
+Bạn có thể dùng mũi tên để chọn trực tiếp trên menu, hoặc gõ nhanh các lệnh sau (hỗ trợ Tiếng Việt 100%):
 
+### 🛡️ Hệ Thống & Quản Lý
 | Lệnh / Bí danh | Chức năng |
-|---|---|
-| `dashboard` / `tongquan` | Xem tổng quan sức khỏe PC — RAM, ổ đĩa, mạng, rác |
-| `system` / `hethong` | OS, CPU, RAM, người dùng, quyền admin |
-| `disk` / `odia` | Dung lượng các ổ đĩa và cảnh báo nếu đầy |
-| `network` / `mang` | IP nội bộ, kiểm tra DNS, Ping & kết nối TCP |
-| `wifi` | Trạng thái Wi-Fi và tên các mạng đã lưu |
-| `wifi settings` | Mở cài đặt Wi-Fi của Windows |
-| `ports <host> <port>` | Kiểm tra kết nối TCP — VD: `ports github.com 443` |
-| `apps [tên]` / `ungdung` | Tìm kiếm các ứng dụng trong Start Menu |
-| `open <tên>` / `mo` | Mở thư mục / ứng dụng / cài đặt — VD: `open chrome` |
-| `processes [n]` / `tientrinh` | Xem top các tiến trình đang ngốn nhiều RAM nhất |
-| `temp` / `quetrac` | Quét thư mục temp và cache trình duyệt |
-| `cleanup` / `donrac` | Xem trước các tệp rác sẽ bị xóa (chưa xóa thật) |
-| `cleanup --apply` | Xóa các tệp rác sau khi xác nhận bằng cách gõ `XOA` |
-| `recycle --empty` | Dọn sạch Thùng rác sau khi xác nhận bằng cách gõ `TRONG` |
-| `startup` / `khoidong` | Liệt kê các tệp khởi động cùng Windows |
-| `path` | Xem các đường dẫn trong biến môi trường PATH |
-| `report` / `baocao` | Xuất báo cáo chẩn đoán đầy đủ ra màn hình Desktop |
-| `theme` / `giaodien` | Đổi màu giao diện: `carbon`, `graphite`, `matrix` |
-| `history` / `lichsu` | Xem lại các lệnh đã gõ |
-| `clear` / `xoa` | Xóa sạch màn hình và vẽ lại |
-| `exit` / `thoat` | Đóng công cụ |
+|:---|:---|
+| 📊 `dashboard` / `tongquan` | Mở bảng điều khiển tổng hợp: CPU, RAM, Ổ đĩa, Mạng, Rác |
+| 🖥️ `system` / `hethong` | Quét cấu hình máy, kiến trúc CPU, quyền User/Admin |
+| 💾 `disk` / `odia` | Phân tích không gian ổ cứng, cảnh báo dung lượng đỏ |
+| 🚀 `startup` / `khoidong` | Soi các ứng dụng chạy ngầm khởi động cùng Windows |
+| ⚙️ `processes` / `tientrinh` | Triệu hồi danh sách tiến trình "ngốn" RAM nhất |
 
-> 🔒 **Mặc định an toàn tuyệt đối.** Chức năng dọn rác sẽ không xóa bất kỳ file nào nếu không có cờ `--apply` và sự xác nhận của bạn.
+### 🌐 Mạng & Kết Nối
+| Lệnh / Bí danh | Chức năng |
+|:---|:---|
+| 📡 `network` / `mang` | Thông tin IP nội bộ/Public, DNS, Ping |
+| 📶 `wifi` | Truy xuất cấu hình Wi-Fi và mật khẩu đã lưu |
+| 🔌 `ports <host> <port>` | Ping cổng TCP (VD: `ports google.com 443`) |
 
----
+### 🔍 Công Cụ Hỗ Trợ
+| Lệnh / Bí danh | Chức năng |
+|:---|:---|
+| 🎯 `apps [tên]` / `ungdung` | Tìm và mở nhanh phần mềm (tự động lọc rác) |
+| 📂 `open <tên>` / `mo` | Mở ứng dụng, web, thư mục siêu tốc |
+| 🧹 `temp` / `quetrac` | Quét phân tích các file rác, bộ nhớ đệm ẩn |
+| 💥 `cleanup --apply` | Phá hủy rác hệ thống (yêu cầu xác nhận an toàn) |
+| 🗑️ `recycle --empty` | Xóa sổ Thùng Rác (không thể phục hồi) |
+| 🎨 `theme` / `giaodien` | Chuyển đổi giao diện `carbon`, `graphite`, `matrix` |
+| 📜 `report` / `baocao` | Xuất file log chẩn đoán chuyên sâu ra Desktop |
 
-## 🎨 Giao diện (Themes)
-
-| Tên Giao diện | Mô tả |
-|---|---|
-| `carbon` | Xanh đậm — Mặc định |
-| `graphite` | Hổ phách, vàng cam ấm áp |
-| `matrix` | Xanh lá trên nền đen |
-
-```
-theme carbon
-theme graphite
-theme matrix
-```
+> 🔒 **Cơ Chế An Toàn Kép:** Mọi hành động phá hủy (`cleanup`, `recycle`) đều bị chặn tự động trừ khi bạn cố tình thêm cờ `--apply` hoặc `--empty` và nhập mã xác nhận.
 
 ---
 
-## 🛠️ Biên dịch & Phát hành
+## 🛠️ DÀNH CHO DEVELOPER (Build & Deploy)
 
-Biên dịch thành file `.exe` độc lập:
+Nếu bạn muốn tùy biến mã nguồn và tự build cho riêng mình:
 
+**1. Biên dịch siêu tốc (`.exe`):**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\make-package.ps1
 ```
 
-Cập nhật mã nguồn + tạo GitHub Release:
-
+**2. Đẩy lên GitHub Release:**
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\publish-github.ps1
 ```
 
-Chạy trực tiếp từ mã nguồn Python (không cần biên dịch):
-
-```powershell
+**3. Chạy Live (Dành cho Dev):**
+```bash
 python -B terminal_ui.py
 ```
 
 ---
 
-## 📋 Yêu cầu hệ thống
-
-- Windows 10 / 11
-- Không yêu cầu cài đặt Python nếu dùng bản `.exe`
-- Python 3.9+ nếu bạn muốn chạy từ mã nguồn
-
----
-
 <div align="center">
 
-Made with ❤️ by [nghianghichcode](https://github.com/nghianghichcode)
+Được rèn đúc từ những dòng lệnh tinh túy nhất bởi [**nghianghichcode**](https://github.com/nghianghichcode).  
+Bản quyền 2026. Keep hacking! 💻🔥
 
 </div>
