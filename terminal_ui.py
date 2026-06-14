@@ -1211,14 +1211,93 @@ class PCToolkit:
     def cmd_apps(self, args: list[str]) -> None:
         query = " ".join(args).strip()
         apps = self.discover_apps(query)
-        rows = [self.app_row(app) for app in apps[:24]]
-        if not rows:
+
+        if not apps:
             message = f"Không tìm thấy ứng dụng: {query}" if query else "Không có ứng dụng nào."
-            rows = [message]
-        elif len(apps) > 24:
-            rows.append(self.color(f"... {len(apps) - 24} mục khác", "muted"))
+            self.write_panel("Apps", [message])
+            return
+
+        if not _HAS_MSVCRT:
+            rows = [self.app_row(app) for app in apps[:24]]
+            if len(apps) > 24:
+                rows.append(self.color(f"... {len(apps) - 24} mục khác", "muted"))
+            title = "Apps" if not query else f"Apps: {query}"
+            self.write_panel(title, rows, footer="Dùng lệnh: open <tên> để mở ứng dụng.")
+            return
+
+        selected = 0
+        total = min(len(apps), 24)
+        display_apps = apps[:total]
         title = "Apps" if not query else f"Apps: {query}"
-        self.write_panel(title, rows, footer="Dùng lệnh: open <tên> để mở ứng dụng.")
+
+        print("\033[?25l", end="", flush=True)  # hide cursor
+        try:
+            while True:
+                print("\033[1;1H", end="", flush=True)
+                self.render_banner()
+                self.render_context(f"apps {query}".strip())
+
+                rows = []
+                for i, app in enumerate(display_apps):
+                    name = shorten(app.name, 34).ljust(36)
+                    kind = app.kind.ljust(9)
+                    if i == selected:
+                        rows.append(
+                            self.color(" > ", "accent", bold=True)
+                            + self.color(name, "fg", bold=True)
+                            + f" {self.color(kind, 'muted')} "
+                            + self.color(str(app.path), "fg")
+                        )
+                    else:
+                        rows.append(
+                            self.color("   ", "muted")
+                            + self.color(name, "accent_2", bold=True)
+                            + f" {self.color(kind, 'muted')} "
+                            + self.color(str(app.path), "fg")
+                        )
+                
+                if len(apps) > 24:
+                    rows.append(self.color(f"... {len(apps) - 24} mục khác", "muted"))
+
+                self.write_panel(title, rows, footer="↑/↓: Di chuyển   Enter: Mở ứng dụng   ESC: Quay lại")
+
+                key = self._read_key()
+                if key == "up":
+                    selected = (selected - 1) % total
+                elif key == "down":
+                    selected = (selected + 1) % total
+                elif key == "enter":
+                    app = display_apps[selected]
+                    if app.kind in ("exe", "shortcut", "script"):
+                        ok, msg = self.launch_path(Path(app.path))
+                    elif app.kind == "url":
+                        ok, msg = self.launch_uri(app.path)
+                    elif app.kind == "command":
+                        ok, msg = self.launch_command([app.path])
+                    else:
+                        ok, msg = False, "unknown type"
+
+                    if os.name == "nt":
+                        os.system("cls")
+                    else:
+                        clear()
+                    self.render_banner()
+                    self.render_context(f"apps {query}".strip())
+                    
+                    res_row = self.kv(app.name, self.status_text(ok, msg))
+                    self.write_panel("Kết quả mở", [res_row])
+                    return
+                elif key == "esc":
+                    if os.name == "nt":
+                        os.system("cls")
+                    else:
+                        clear()
+                    self.render_banner()
+                    self.render_context(f"apps {query}".strip())
+                    self.write_panel(title, rows, footer="Đã hủy.")
+                    return
+        finally:
+            print("\033[?25h", end="", flush=True)  # restore cursor
 
     def launch_uri(self, uri: str) -> tuple[bool, str]:
         try:
