@@ -79,7 +79,10 @@ def shorten(value: str, width: int) -> str:
 
 
 def clear() -> None:
-    print(f"{ESC}2J{ESC}H", end="")
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        print(f"{ESC}2J{ESC}H", end="", flush=True)
 
 
 def configure_stdio() -> None:
@@ -341,11 +344,20 @@ class PCToolkit:
         print()
 
     def render_banner(self) -> None:
+        art = [
+            r" _   _  ____ _   _ ___    _       ____   ____",
+            r"| \ | |/ ___| | | |_ _|  / \     |  _ \ / ___|",
+            r"|  \| | |  _| |_| || |  / _ \    | |_) | |",
+            r"| |\  | |_| |  _  || | / ___ \   |  __/| |___",
+            r"|_| \_|\____|_| |_|___/_/   \_\  |_|    \____|",
+            r"                 T O O L K I T",
+        ]
         print(self.color(self.line("."), "muted"))
-        print(
-            self.color(" :: NGHIA PC TOOLKIT :: ", "accent", bold=True)
-            + self.color(f"v{APP_VERSION} - Công cụ hệ thống Windows", "muted")
-        )
+        colors = ("accent", "accent_2", "success", "accent_2", "accent", "warning")
+        for index, row in enumerate(art):
+            print(self.color(row, colors[index % len(colors)], bold=True))
+        print(self.color(":: NGHIA PC TOOLKIT ::", "fg", bold=True))
+        print(self.color(f"v{APP_VERSION} - Công cụ hệ thống Windows", "muted"))
         print(self.color(self.line("."), "muted"))
         print()
 
@@ -509,8 +521,8 @@ class PCToolkit:
                         return key + rest
                     except (EOFError, KeyboardInterrupt):
                         return "exit"
-                # Redraw: clear + banner + menu
-                clear()
+                # Redraw: ONLY MOVE CURSOR HOME, DO NOT CLEAR
+                print("\033[1;1H", end="", flush=True)
                 self.render_banner()
                 self._render_menu(selected)
         finally:
