@@ -1169,7 +1169,9 @@ class PCToolkit:
         }
         needle = query.casefold().strip()
         entries: list[AppEntry] = []
-        seen: set[str] = set()
+        seen_names: set[str] = set()
+        junk_keywords = ("uninstall", "gỡ cài", "readme", "help", "manual", "hướng dẫn", "setup", "update", "website", "url")
+        
         for root in self.app_roots():
             for current, _, filenames in os.walk(root):
                 for filename in filenames:
@@ -1177,14 +1179,18 @@ class PCToolkit:
                     suffix = path.suffix.lower()
                     if suffix not in allowed:
                         continue
-                    key = str(path).casefold()
-                    if key in seen:
-                        continue
+                    
                     name = path.stem.replace(" - Shortcut", "").strip()
                     searchable = name.casefold()
+                    
+                    if any(junk in searchable for junk in junk_keywords):
+                        continue
                     if needle and needle not in searchable:
                         continue
-                    seen.add(key)
+                    if searchable in seen_names:
+                        continue
+                        
+                    seen_names.add(searchable)
                     entries.append(AppEntry(name=name, path=path, kind=allowed[suffix]))
 
         def score(entry: AppEntry) -> tuple[int, int, str]:
