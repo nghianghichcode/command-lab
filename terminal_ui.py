@@ -1087,7 +1087,16 @@ class PCToolkit:
             self.kv("Dung lượng ước tính", human_bytes(scan.bytes_total)),
             self.kv("Lỗi truy cập", str(scan.errors)),
         ]
-        self.write_panel("Quét Rác", rows, footer="Chạy lệnh 'cleanup' để dọn dẹp, hoặc 'cleanup --apply' để xóa ngay.")
+        self.write_panel("Quét Rác", rows, footer="Bạn có muốn dọn dẹp các tệp rác này không?")
+        
+        print()
+        print(self.color("  Nhấn phím Y để XÓA NGAY, hoặc phím bất kỳ để quay lại...", "muted"), end="", flush=True)
+        key = self._read_key()
+        if key.lower() == "y":
+            print("\n")
+            self.cmd_cleanup(["--apply"])
+        else:
+            self._skip_wait = True
 
     def cmd_cleanup(self, args: list[str]) -> None:
         apply = "--apply" in args or "-y" in args
@@ -1105,8 +1114,16 @@ class PCToolkit:
             self.write_panel(
                 "Xem Trước Dọn Dẹp",
                 rows,
-                footer="Chưa có gì bị xóa. Dùng cleanup --apply và gõ XOA để xác nhận.",
+                footer="Chưa có gì bị xóa. Bạn có muốn xóa ngay không?",
             )
+            print()
+            print(self.color("  Nhấn phím Y để XÓA NGAY, hoặc phím bất kỳ để quay lại...", "muted"), end="", flush=True)
+            key = self._read_key()
+            if key.lower() == "y":
+                print("\n")
+                self.cmd_cleanup(["--apply"])
+            else:
+                self._skip_wait = True
             return
 
         print(self.color("Lệnh này chỉ xóa các tệp rác trong temp/cache.", "warning", bold=True))
