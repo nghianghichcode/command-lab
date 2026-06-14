@@ -51,7 +51,7 @@ dist\command-lab.zip
 The installer is already configured to download from:
 
 ```txt
-https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip
+https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=standalone-20260614
 ```
 
 If your repository name is not `command-lab`, replace `command-lab` in both GitHub URLs with the real repository name.

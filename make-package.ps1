@@ -13,9 +13,7 @@ if (Test-Path $zipPath) {
     Remove-Item -Force $zipPath
 }
 
-if (-not (Test-Path $exePath)) {
-    & powershell -ExecutionPolicy Bypass -File (Join-Path $root "build-exe.ps1")
-}
+& powershell -ExecutionPolicy Bypass -File (Join-Path $root "build-exe.ps1")
 
 if (Test-Path $packageDir) {
     Remove-Item -Recurse -Force $packageDir

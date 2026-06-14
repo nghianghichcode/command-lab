@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # Upload dist/command-lab.zip to this repository's GitHub Releases.
-$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip"
+$ZipUrl = "https://github.com/nghianghichcode/command-lab/releases/latest/download/command-lab.zip?v=standalone-20260614"
 
 $InstallDir = Join-Path $env:LOCALAPPDATA "CommandLab"
 $TempDir = Join-Path $env:TEMP ("command-lab-install-" + [guid]::NewGuid().ToString("N"))
