@@ -4,8 +4,7 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $dist = Join-Path $root "dist"
 $zipPath = Join-Path $dist "command-lab.zip"
 $packageDir = Join-Path $dist ("package-" + [guid]::NewGuid().ToString("N"))
-$appBuildDir = Join-Path $root "build\exe\pctool"
-$exePath = Join-Path $appBuildDir "pctool.exe"
+$exePath = Join-Path $root "pctool.exe"
 
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
@@ -13,7 +12,12 @@ if (Test-Path $zipPath) {
     Remove-Item -Force $zipPath
 }
 
-& powershell -ExecutionPolicy Bypass -File (Join-Path $root "build-exe.ps1")
+# Build onefile exe
+python -m PyInstaller --name pctool --onefile --clean `
+    --distpath $root `
+    --workpath (Join-Path $root "build\pyinstaller") `
+    --specpath (Join-Path $root "build") `
+    (Join-Path $root "terminal_ui.py")
 
 New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
@@ -33,7 +37,7 @@ foreach ($file in $files) {
     Copy-Item -Force -Path $source -Destination (Join-Path $packageDir (Split-Path -Leaf $file))
 }
 
-Copy-Item -Recurse -Force -Path (Join-Path $appBuildDir "*") -Destination $packageDir
+Copy-Item -Force -Path $exePath -Destination (Join-Path $packageDir "pctool.exe")
 
 Start-Sleep -Milliseconds 500
 Add-Type -AssemblyName System.IO.Compression.FileSystem
