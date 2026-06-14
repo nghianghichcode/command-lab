@@ -206,7 +206,9 @@ class PCToolkit:
         self.theme = THEMES["carbon"]
         self.history: list[str] = []
         self.running = True
-        self.interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        # On Windows with msvcrt available, arrow-key input always works
+        # regardless of isatty() — so treat as interactive unconditionally.
+        self.interactive = _HAS_MSVCRT or (sys.stdin.isatty() and sys.stdout.isatty())
         self.last_temp_scan: TempScan | None = None
         self.commands: dict[str, Callable[[list[str]], None]] = {
             "help": self.cmd_help,
@@ -456,7 +458,7 @@ class PCToolkit:
         Show an interactive arrow-key menu.
         Returns the selected command string, or None if user pressed ESC.
         """
-        if not self.interactive or not _HAS_MSVCRT:
+        if not _HAS_MSVCRT:
             # Fallback: just show the menu as text and ask for number
             print()
             for i, (label, _) in enumerate(self.MENU_ITEMS, 1):
