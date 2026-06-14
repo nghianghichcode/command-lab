@@ -415,7 +415,7 @@ class PCToolkit:
         items = self.MENU_ITEMS
         n = len(items)
         half = n // 2 + n % 2  # left column count
-        col_w = (width - 6) // 2
+        col_w = (width - 5) // 2
 
         sep = self.color("+" + "-" * (width - 2) + "+", "muted")
         header_text = " " + self.color("MENU", "accent", bold=True) + \
@@ -433,10 +433,9 @@ class PCToolkit:
         for row in range(half):
             left_idx = row
             right_idx = row + half
-            line = self.color("|", "muted") + " "
+            content = " "
             for idx in (left_idx, right_idx):
                 if idx >= n:
-                    line += " " * (col_w + 2)
                     continue
                 label, _ = items[idx]
                 if idx == selected:
@@ -446,9 +445,13 @@ class PCToolkit:
                     )
                 else:
                     cell = self.color("   " + pad(label, col_w - 3), "muted")
-                line += pad(cell, col_w) + "  "
-            line = line.rstrip()
-            line += self.color("|", "muted")
+                
+                if idx == left_idx:
+                    content += pad(cell, col_w) + "  "
+                else:
+                    content += pad(cell, col_w)
+            
+            line = self.color("|", "muted") + pad(content, width - 2) + self.color("|", "muted")
             print(line)
 
         print(sep)
