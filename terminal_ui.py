@@ -378,23 +378,28 @@ class PCToolkit:
     ]
 
     def _read_key(self) -> str:
-        """Read a single keypress. Returns 'up', 'down', 'enter', 'esc', or the char."""
+        """Read a single keypress. Returns 'up', 'down', 'enter', 'esc', or the char.
+        Unknown/unsupported special keys return empty string.
+        """
         if _HAS_MSVCRT:
-            ch = _msvcrt.getwch()
-            if ch in ("\xe0", "\x00"):  # special key prefix on Windows
-                ch2 = _msvcrt.getwch()
-                if ch2 == "H":
-                    return "up"
-                if ch2 == "P":
-                    return "down"
-                return "other"
-            if ch == "\r":
-                return "enter"
-            if ch == "\x1b":
-                return "esc"
-            if ch == "\x03":  # Ctrl-C
-                raise KeyboardInterrupt
-            return ch
+            while True:
+                ch = _msvcrt.getwch()
+                if ch in ("\xe0", "\x00"):  # special key prefix on Windows
+                    ch2 = _msvcrt.getwch()
+                    if ch2 == "H":
+                        return "up"
+                    if ch2 == "P":
+                        return "down"
+                    # ignore other special keys (F-keys, Page Up/Down, etc.)
+                    continue
+                if ch == "\r":
+                    return "enter"
+                if ch == "\x1b":
+                    return "esc"
+                if ch == "\x03":  # Ctrl-C
+                    raise KeyboardInterrupt
+                # Printable char
+                return ch
         # Fallback: just read a line
         try:
             line = input().strip()
@@ -403,32 +408,30 @@ class PCToolkit:
         return line if line else "enter"
 
     def _render_menu(self, selected: int) -> None:
-        """Render the interactive menu in place."""
+        """Render the interactive menu (ASCII-safe, works in any Windows terminal)."""
         width = self.panel_width()
         items = self.MENU_ITEMS
         n = len(items)
         half = n // 2 + n % 2  # left column count
         col_w = (width - 6) // 2
 
-        # Header
-        border_top = self.color("┌" + "─" * (width - 2) + "┐", "muted")
+        sep = self.color("+" + "-" * (width - 2) + "+", "muted")
         header_text = " " + self.color("MENU", "accent", bold=True) + \
-            self.color("  ↑↓ Navigate   Enter Select   ESC Text Mode", "muted")
+            self.color("  Up/Down Navigate   Enter Select   ESC Text Mode", "muted")
         header_line = (
-            self.color("│", "muted")
+            self.color("|", "muted")
             + pad(header_text, width - 2)
-            + self.color("│", "muted")
+            + self.color("|", "muted")
         )
-        divider = self.color("├" + "─" * (width - 2) + "┤", "muted")
-        print(border_top)
+        print(sep)
         print(header_line)
-        print(divider)
+        print(sep)
 
         # Two-column layout
         for row in range(half):
             left_idx = row
             right_idx = row + half
-            line = self.color("│", "muted") + " "
+            line = self.color("|", "muted") + " "
             for idx in (left_idx, right_idx):
                 if idx >= n:
                     line += " " * (col_w + 2)
@@ -436,30 +439,26 @@ class PCToolkit:
                 label, _ = items[idx]
                 if idx == selected:
                     cell = (
-                        self.color(" ► ", "accent", bold=True)
+                        self.color(" > ", "accent", bold=True)
                         + self.color(pad(label, col_w - 3), "fg", bold=True)
                     )
                 else:
                     cell = self.color("   " + pad(label, col_w - 3), "muted")
                 line += pad(cell, col_w) + "  "
             line = line.rstrip()
-            line += self.color("│", "muted")
+            line += self.color("|", "muted")
             print(line)
 
-        print(self.color("└" + "─" * (width - 2) + "┘", "muted"))
-
-    def _count_menu_lines(self) -> int:
-        n = len(self.MENU_ITEMS)
-        half = n // 2 + n % 2
-        return half + 3  # top border + header + divider + rows + bottom border
+        print(sep)
 
     def interactive_menu(self) -> str | None:
         """
         Show an interactive arrow-key menu.
         Returns the selected command string, or None if user pressed ESC.
+        Uses cursor save/restore (\033[s / \033[u) for reliable in-place redraw.
         """
         if not _HAS_MSVCRT:
-            # Fallback: just show the menu as text and ask for number
+            # Fallback: numbered list for non-Windows
             print()
             for i, (label, _) in enumerate(self.MENU_ITEMS, 1):
                 print(f"  {self.color(str(i).rjust(2), 'accent_2')}. {self.color(label, 'fg')}")
@@ -468,7 +467,6 @@ class PCToolkit:
                 raw = input(self.prompt()).strip()
             except (EOFError, KeyboardInterrupt):
                 return "exit"
-            # Allow number selection
             if raw.isdigit():
                 n = int(raw) - 1
                 if 0 <= n < len(self.MENU_ITEMS):
@@ -477,10 +475,10 @@ class PCToolkit:
 
         selected = 0
         total = len(self.MENU_ITEMS)
-        menu_lines = self._count_menu_lines()
 
-        # Hide cursor
+        # Hide cursor, save position
         print("\033[?25l", end="", flush=True)
+        print("\033[s", end="", flush=True)   # save cursor position
         try:
             self._render_menu(selected)
             while True:
@@ -491,30 +489,25 @@ class PCToolkit:
                     selected = (selected + 1) % total
                 elif key == "enter":
                     cmd = self.MENU_ITEMS[selected][1]
-                    # Move cursor up to overwrite menu
-                    print(f"\033[{menu_lines}A", end="", flush=True)
-                    print(f"\033[J", end="", flush=True)
+                    # Restore cursor and clear menu
+                    print("\033[u\033[J", end="", flush=True)
                     return cmd
                 elif key == "esc":
-                    print(f"\033[{menu_lines}A", end="", flush=True)
-                    print(f"\033[J", end="", flush=True)
+                    print("\033[u\033[J", end="", flush=True)
                     return None
-                else:
-                    # Any other char: treat as start of a typed command, rebuild
-                    print(f"\033[{menu_lines}A", end="", flush=True)
-                    print(f"\033[J", end="", flush=True)
-                    # Let the user type a command (pre-seeded with this char)
+                elif key:
+                    # Printable char typed -> clear menu, enter text mode
+                    print("\033[u\033[J", end="", flush=True)
                     try:
                         rest = input(self.prompt() + key).strip()
                         return key + rest
                     except (EOFError, KeyboardInterrupt):
                         return "exit"
-                # Re-render menu in place
-                print(f"\033[{menu_lines}A", end="", flush=True)
+                # Redraw menu from saved cursor position
+                print("\033[u", end="", flush=True)
                 self._render_menu(selected)
         finally:
-            # Restore cursor
-            print("\033[?25h", end="", flush=True)
+            print("\033[?25h", end="", flush=True)  # restore cursor
 
     def loop(self) -> None:
         self.boot()
