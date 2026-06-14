@@ -4,7 +4,13 @@ Interactive Windows terminal toolkit for quick diagnostics and safe maintenance.
 
 ## Install
 
-User-facing one-line install command:
+Short install command:
+
+```powershell
+powershell -c "irm https://github.com/nghianghichcode/command-lab/raw/main/i.ps1|iex"
+```
+
+Fallback install command:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/nghianghichcode/command-lab/main/install-online.ps1 | iex"

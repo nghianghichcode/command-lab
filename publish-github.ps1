@@ -78,7 +78,7 @@ try {
     Write-Host "  https://github.com/$RepoOwner/$RepoName"
     Write-Host ""
     Write-Host "User install command:"
-    Write-Host "  powershell -NoProfile -ExecutionPolicy Bypass -Command `"irm https://raw.githubusercontent.com/$RepoOwner/$RepoName/main/install-online.ps1 | iex`""
+    Write-Host "  powershell -c `"irm https://github.com/$RepoOwner/$RepoName/raw/main/i.ps1|iex`""
 } finally {
     Pop-Location
 }
