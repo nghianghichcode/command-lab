@@ -22,6 +22,22 @@ function Get-GhPath {
     throw "GitHub CLI not found. Install it first: winget install --id GitHub.cli -e --source winget"
 }
 
+function Invoke-QuietNative {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock] $Command
+    )
+
+    $oldErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & $Command *> $null
+        return $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $oldErrorActionPreference
+    }
+}
+
 $gh = Get-GhPath
 
 Push-Location $root
@@ -32,11 +48,7 @@ try {
         & powershell -ExecutionPolicy Bypass -File (Join-Path $root "make-package.ps1")
     }
 
-    $repoExists = $true
-    & $gh repo view "$RepoOwner/$RepoName" *> $null
-    if ($LASTEXITCODE -ne 0) {
-        $repoExists = $false
-    }
+    $repoExists = (Invoke-QuietNative { & $gh repo view "$RepoOwner/$RepoName" }) -eq 0
 
     if (-not $repoExists) {
         & $gh repo create "$RepoOwner/$RepoName" --public --description "Interactive command terminal prototype" --disable-wiki
@@ -53,8 +65,8 @@ try {
 
     git push -u origin main
 
-    & $gh release view $ReleaseTag --repo "$RepoOwner/$RepoName" *> $null
-    if ($LASTEXITCODE -ne 0) {
+    $releaseExists = (Invoke-QuietNative { & $gh release view $ReleaseTag --repo "$RepoOwner/$RepoName" }) -eq 0
+    if (-not $releaseExists) {
         & $gh release create $ReleaseTag $zipPath --repo "$RepoOwner/$RepoName" --title $ReleaseTitle --notes "Initial Windows command terminal installer."
     } else {
         & $gh release upload $ReleaseTag $zipPath --repo "$RepoOwner/$RepoName" --clobber
