@@ -55,12 +55,15 @@ try {
     }
 
     $remoteUrl = "https://github.com/$RepoOwner/$RepoName.git"
-    $origin = git remote get-url origin 2>$null
+    $hasOrigin = (Invoke-QuietNative { git remote get-url origin }) -eq 0
 
-    if (-not $origin) {
+    if (-not $hasOrigin) {
         git remote add origin $remoteUrl
-    } elseif ($origin -ne $remoteUrl) {
-        git remote set-url origin $remoteUrl
+    } else {
+        $origin = git remote get-url origin
+        if ($origin -ne $remoteUrl) {
+            git remote set-url origin $remoteUrl
+        }
     }
 
     git push -u origin main
