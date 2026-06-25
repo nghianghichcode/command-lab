@@ -657,6 +657,7 @@ class PCToolkit:
             self.command_row("network", "Kiểm tra IP nội bộ, DNS và kết nối mạng"),
             self.command_row("wifi", "Xem trạng thái Wi-Fi và các mạng đã lưu"),
             self.command_row("wifi settings", "Mở Cài đặt Wi-Fi của Windows"),
+            self.command_row("wifi password [tên]", "Xem mật khẩu profile Wi-Fi đã lưu sau khi xác nhận"),
             self.command_row("ports host port", "Kiểm tra cổng TCP (VD: ports github.com 443)"),
             self.command_row("apps [name]", "Tìm kiếm ứng dụng trong Start Menu"),
             self.command_row("open <app>", "Mở nhanh ứng dụng hoặc thư mục (VD: open chrome)"),
@@ -970,7 +971,72 @@ class PCToolkit:
                 profiles.append(name)
         return sorted(set(profiles), key=str.lower), ""
 
+    def parse_wifi_password(self, output: str) -> str | None:
+        markers = (
+            "key content",
+            "nội dung khóa",
+            "contenu de la clé",
+            "schlüsselinhalt",
+            "contenido de la clave",
+        )
+        for line in output.splitlines():
+            if ":" not in line:
+                continue
+            key, value = line.split(":", 1)
+            if any(marker in key.strip().casefold() for marker in markers):
+                password = value.strip()
+                return password or None
+        return None
+
+    def wifi_password(self, profile: str) -> tuple[bool, str, str]:
+        code, output = run_capture(
+            ["netsh", "wlan", "show", "profile", f"name={profile}", "key=clear"],
+            timeout=10,
+        )
+        if code != 0:
+            return False, "", "Không thể đọc profile Wi-Fi hoặc cần quyền cao hơn."
+        password = self.parse_wifi_password(output)
+        if password:
+            return True, password, "đã đọc từ profile Wi-Fi đã lưu"
+        return False, "", "Không có mật khẩu lưu sẵn, mạng mở, hoặc profile dùng xác thực doanh nghiệp."
+
     def cmd_wifi(self, args: list[str]) -> None:
+        if args and args[0].casefold() in {"password", "pass", "matkhau", "mật khẩu"}:
+            info = self.wifi_interfaces()
+            profile = " ".join(args[1:]).strip() or info.get("SSID", "").strip()
+            if not profile:
+                self.error('Không xác định được mạng. Dùng: wifi password "Tên Wi-Fi"')
+                return
+
+            self.write_panel(
+                "Xác Nhận Xem Mật Khẩu",
+                [
+                    self.kv("Profile", profile),
+                    "Mật khẩu sẽ hiển thị trực tiếp trên màn hình.",
+                    "Chỉ tiếp tục khi đây là máy hoặc mạng bạn được phép quản lý.",
+                ],
+                footer="Nhấn Y để hiển thị; phím khác để hủy.",
+            )
+            key = self._read_key()
+            print()
+            if key.casefold() != "y":
+                self.write_panel("Wi-Fi", ["Đã hủy xem mật khẩu."])
+                return
+
+            ok, password, message = self.wifi_password(profile)
+            rows = [self.kv("Profile", profile)]
+            if ok:
+                rows.append(self.kv("Mật khẩu", self.color(password, "success", bold=True)))
+                rows.append(self.kv("Nguồn", message))
+            else:
+                rows.append(self.kv("Kết quả", self.color(message, "warning", bold=True)))
+            self.write_panel(
+                "Mật Khẩu Wi-Fi",
+                rows,
+                footer="Mật khẩu chỉ hiển thị ở màn hình này và không được đưa vào báo cáo.",
+            )
+            return
+
         if args and args[0].lower() in {"open", "settings", "setting"}:
             ok, message = self.launch_uri("ms-settings:network-wifi")
             rows = [self.kv("Cài đặt Wi-Fi", self.status_text(ok, message))]
@@ -1002,7 +1068,7 @@ class PCToolkit:
         self.write_panel(
             "Wi-Fi",
             rows,
-            footer='Gõ "wifi settings" để mở Cài đặt. Mật khẩu không được hiển thị để bảo mật.',
+            footer='Gõ "wifi password" để xem mật khẩu mạng hiện tại, hoặc "wifi settings" để mở Cài đặt.',
         )
 
     def tcp_check(self, host: str, port: int, timeout: int = 4) -> bool:
