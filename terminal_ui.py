@@ -240,6 +240,7 @@ class PCToolkit:
         self.theme = THEMES["carbon"]
         self.history: list[str] = []
         self.running = True
+        self._skip_wait = False
         # On Windows with msvcrt available, arrow-key input always works
         # regardless of isatty() — so treat as interactive unconditionally.
         self.interactive = _HAS_MSVCRT or (sys.stdin.isatty() and sys.stdout.isatty())
@@ -580,7 +581,6 @@ class PCToolkit:
 
     def loop(self) -> None:
         self.boot()
-
         while self.running:
             try:
                 result = self.interactive_menu()
@@ -588,9 +588,7 @@ class PCToolkit:
                 print()
                 self.cmd_exit([])
                 break
-
             if result is None:
-                # ESC -> text input mode (banner already drawn)
                 try:
                     raw = input(self.prompt()).strip()
                 except (EOFError, KeyboardInterrupt):
@@ -599,18 +597,15 @@ class PCToolkit:
                     break
                 if not raw:
                     continue
-                self.history.append(raw)
-                self.dispatch(raw)
-                if self.running:
-                    self._wait_key()
             else:
                 raw = result.strip()
                 if not raw:
                     continue
-                self.history.append(raw)
-                self.dispatch(raw)
-                if self.running:
-                    self._wait_key()
+            self.history.append(raw)
+            self.dispatch(raw)
+            if self.running and not self._skip_wait:
+                self._wait_key()
+            self._skip_wait = False
 
     def dispatch(self, raw: str) -> None:
         try:
@@ -1000,6 +995,42 @@ class PCToolkit:
             return True, password, "đã đọc từ profile Wi-Fi đã lưu"
         return False, "", "Không có mật khẩu lưu sẵn, mạng mở, hoặc profile dùng xác thực doanh nghiệp."
 
+    def wifi_select(self, title: str, options: list[str], context: str = "wifi") -> int | None:
+        if not options:
+            return None
+        if not _HAS_MSVCRT:
+            rows = [f"{index}. {option}" for index, option in enumerate(options, start=1)]
+            self.write_panel(title, rows, footer="Enter a choice number.")
+            try:
+                choice = int(input(self.prompt()).strip()) - 1
+                return choice if 0 <= choice < len(options) else None
+            except (ValueError, EOFError, KeyboardInterrupt):
+                return None
+        selected = 0
+        print("\033[?25l", end="", flush=True)
+        try:
+            while True:
+                clear()
+                self.render_banner()
+                self.render_context(context)
+                rows = []
+                for index, option in enumerate(options):
+                    marker = " > " if index == selected else "   "
+                    color = "accent" if index == selected else "muted"
+                    rows.append(self.color(marker + option, color, bold=index == selected))
+                self.write_panel(title, rows, footer="↑/↓: Di chuyển   Enter: Chọn   ESC: Quay lại")
+                key = self._read_key()
+                if key == "up": selected = (selected - 1) % len(options)
+                elif key == "down": selected = (selected + 1) % len(options)
+                elif key == "enter": return selected
+                elif key == "esc": return None
+        finally:
+            print("\033[?25h", end="", flush=True)
+
+    def wifi_profile_menu(self, profiles: list[str]) -> str | None:
+        choice = self.wifi_select("Chọn Mạng Wi-Fi Đã Lưu", profiles, "wifi profiles")
+        return profiles[choice] if choice is not None else None
+
     def cmd_wifi(self, args: list[str]) -> None:
         if args and args[0].casefold() in {"password", "pass", "matkhau", "mật khẩu"}:
             info = self.wifi_interfaces()
@@ -1065,11 +1096,34 @@ class PCToolkit:
             rows.extend(self.color(name, "accent_2") for name in profiles[:18])
             if len(profiles) > 18:
                 rows.append(self.color(f"... {len(profiles) - 18} mạng khác", "muted"))
-        self.write_panel(
-            "Wi-Fi",
-            rows,
-            footer='Gõ "wifi password" để xem mật khẩu mạng hiện tại, hoặc "wifi settings" để mở Cài đặt.',
-        )
+        actions = ["Thông tin kết nối", "Xem mật khẩu mạng đang kết nối"]
+        if profiles:
+            actions.append("Chọn mạng đã lưu để xem mật khẩu")
+        actions.extend(["Mở cài đặt Wi-Fi", "Quay lại"])
+        choice = self.wifi_select("Thao Tác Wi-Fi", actions)
+        if choice is None or actions[choice] == "Quay lại":
+            self._skip_wait = True
+            return
+        action = actions[choice]
+        if action == "Thông tin kết nối":
+            self.write_panel("Wi-Fi", rows, footer="Nhấn phím bất kỳ để quay lại menu chính.")
+            return
+        if action == "Mở cài đặt Wi-Fi":
+            self.cmd_wifi(["settings"])
+            return
+        if action == "Chọn mạng đã lưu để xem mật khẩu":
+            profile = self.wifi_profile_menu(profiles)
+            if profile is None:
+                self._skip_wait = True
+                return
+            self.cmd_wifi(["password", profile])
+            return
+        current_profile = info.get("SSID", "").strip()
+        if not current_profile:
+            self.write_panel("Wi-Fi", ["Chưa kết nối Wi-Fi. Hãy chọn mạng đã lưu."])
+            return
+        self.cmd_wifi(["password", current_profile])
+
 
     def tcp_check(self, host: str, port: int, timeout: int = 4) -> bool:
         try:
