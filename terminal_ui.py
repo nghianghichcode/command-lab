@@ -30,7 +30,7 @@ except ImportError:
 
 APP_NAME = "Nghia PC Toolkit"
 APP_COMMAND = "pctool"
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.6.0"
 
 ESC = "\033["
 RESET = f"{ESC}0m"
@@ -226,6 +226,15 @@ class AppEntry:
     kind: str
 
 
+@dataclass(frozen=True)
+class BatteryInfo:
+    present: bool
+    percent: int | None
+    charging: bool
+    on_ac: bool
+    seconds_remaining: int | None
+
+
 class PCToolkit:
     def __init__(self) -> None:
         self.theme = THEMES["carbon"]
@@ -242,6 +251,10 @@ class PCToolkit:
             "dashboard": self.cmd_dashboard,
             "tongquan": self.cmd_dashboard,
             "status": self.cmd_dashboard,
+            "health": self.cmd_health,
+            "suckhoe": self.cmd_health,
+            "battery": self.cmd_battery,
+            "pin": self.cmd_battery,
             "system": self.cmd_system,
             "hethong": self.cmd_system,
             "sys": self.cmd_system,
@@ -397,6 +410,8 @@ class PCToolkit:
     # ------------------------------------------------------------------ #
     MENU_ITEMS: list[tuple[str, str]] = [
         ("Tổng quan",   "dashboard"),
+        ("Sức khỏe",    "health"),
+        ("Pin laptop",  "battery"),
         ("Hệ thống",    "system"),
         ("Ổ đĩa",       "disk"),
         ("Mạng",        "network"),
@@ -635,6 +650,8 @@ class PCToolkit:
     def cmd_help(self, _: list[str]) -> None:
         rows = [
             self.command_row("dashboard", "Xem tổng quan sức khỏe hệ thống (RAM, CPU, Ổ đĩa, Mạng)"),
+            self.command_row("health / suckhoe", "Chấm điểm sức khỏe máy và khuyến nghị tối ưu"),
+            self.command_row("battery / pin", "Xem pin laptop, nguồn điện và thời gian còn lại"),
             self.command_row("system", "Thông tin chi tiết về Hệ điều hành, CPU, RAM"),
             self.command_row("disk", "Xem dung lượng các ổ đĩa và cảnh báo đầy"),
             self.command_row("network", "Kiểm tra IP nội bộ, DNS và kết nối mạng"),
@@ -661,6 +678,8 @@ class PCToolkit:
         memory = self.memory_info()
         disks = self.disk_info()
         temp_scan = self.scan_temp(max_items=35000)
+        battery = self.battery_info()
+        health, _, grade = self.health_score(memory, disks, temp_scan, battery)
         self.last_temp_scan = temp_scan
 
         disk_warning = "ok"
@@ -673,12 +692,14 @@ class PCToolkit:
             self.kv("Người dùng", getpass.getuser()),
             self.kv("HĐH", platform.platform()),
             self.kv("Quyền Admin", "Có" if self.is_admin() else "Không"),
+            self.kv("Sức khỏe", f"{health}/100 - {grade}"),
             self.kv("RAM", self.memory_summary(memory)),
             self.kv("Ổ đĩa", disk_warning),
             self.kv("Mạng", local_ip),
+            self.kv("Pin", self.battery_summary(battery)),
             self.kv("Tệp rác", f"{human_bytes(temp_scan.bytes_total)} trong {temp_scan.files} tệp"),
         ]
-        self.write_panel("Tổng Quan", rows, footer="Gõ lệnh: system | disk | network | wifi | apps | cleanup | report")
+        self.write_panel("Tổng Quan", rows, footer="Gõ lệnh: health | battery | system | disk | network | cleanup | report")
 
     def kv(self, key: str, value: str) -> str:
         display = shorten(value, 92)
@@ -731,6 +752,64 @@ class PCToolkit:
             return {"total": int(data["total"]), "free": int(data["free"])}
         except Exception:
             return None
+
+    def battery_info(self) -> BatteryInfo:
+        if os.name != "nt":
+            return BatteryInfo(False, None, False, False, None)
+        class SystemPowerStatus(ctypes.Structure):
+            _fields_ = [("ACLineStatus", ctypes.c_ubyte), ("BatteryFlag", ctypes.c_ubyte), ("BatteryLifePercent", ctypes.c_ubyte), ("SystemStatusFlag", ctypes.c_ubyte), ("BatteryLifeTime", ctypes.c_ulong), ("BatteryFullLifeTime", ctypes.c_ulong)]
+        status = SystemPowerStatus()
+        try:
+            ok = ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status))
+        except Exception:
+            ok = 0
+        if not ok:
+            return BatteryInfo(False, None, False, False, None)
+        present = status.BatteryFlag != 128 and status.BatteryLifePercent != 255
+        seconds = int(status.BatteryLifeTime)
+        return BatteryInfo(present, int(status.BatteryLifePercent) if present else None, bool(status.BatteryFlag & 8), status.ACLineStatus == 1, None if seconds == 0xFFFFFFFF else seconds)
+
+    def battery_summary(self, battery: BatteryInfo) -> str:
+        if not battery.present:
+            return "Kh\u00f4ng ph\u00e1t hi\u1ec7n pin (PC \u0111\u1ec3 b\u00e0n)"
+        source = "\u0111ang s\u1ea1c" if battery.charging else "\u0111ang d\u00f9ng \u0111i\u1ec7n" if battery.on_ac else "\u0111ang d\u00f9ng pin"
+        return f"{battery.percent}% - {source}"
+
+    def health_score(self, memory, disks, scan: TempScan, battery: BatteryInfo):
+        score, tips = 100, []
+        if memory:
+            used = safe_percent(memory["total"] - memory["free"], memory["total"])
+            if used >= 90: score -= 25; tips.append("RAM g\u1ea7n \u0111\u1ea7y; h\u00e3y \u0111\u00f3ng \u1ee9ng d\u1ee5ng n\u1eb7ng.")
+            elif used >= 80: score -= 14; tips.append("RAM \u0111ang d\u00f9ng cao; ki\u1ec3m tra Ti\u1ebfn tr\u00ecnh.")
+        if disks:
+            worst=max(float(x["used_percent"]) for x in disks)
+            if worst >= 95: score -= 30; tips.append("\u1ed4 \u0111\u0129a g\u1ea7n h\u1ebft ch\u1ed7; c\u1ea7n gi\u1ea3i ph\u00f3ng dung l\u01b0\u1ee3ng.")
+            elif worst >= 85: score -= 15; tips.append("Dung l\u01b0\u1ee3ng \u1ed5 \u0111\u0129a \u0111ang cao; n\u00ean d\u1ecdn d\u1eb9p.")
+        gb=scan.bytes_total/(1024**3)
+        if gb >= 5: score -= 15; tips.append("C\u00f3 h\u01a1n 5 GB t\u1ec7p t\u1ea1m/cache.")
+        elif gb >= 2: score -= 8; tips.append("C\u00f3 h\u01a1n 2 GB t\u1ec7p t\u1ea1m/cache.")
+        if battery.present and battery.percent is not None and not battery.on_ac and battery.percent <= 15:
+            score -= 8; tips.append("Pin th\u1ea5p; h\u00e3y k\u1ebft n\u1ed1i b\u1ed9 s\u1ea1c.")
+        score=max(0,min(100,score))
+        grade="R\u1ea5t t\u1ed1t" if score>=90 else "T\u1ed1t" if score>=75 else "C\u1ea7n ch\u00fa \u00fd" if score>=60 else "C\u1ea7n t\u1ed1i \u01b0u"
+        return score, tips or ["H\u1ec7 th\u1ed1ng \u0111ang \u1ed5n; h\u00e3y sao l\u01b0u d\u1eef li\u1ec7u \u0111\u1ecbnh k\u1ef3."], grade
+
+    def cmd_health(self, _: list[str]) -> None:
+        memory, disks, scan, battery = self.memory_info(), self.disk_info(), self.scan_temp(max_items=60000), self.battery_info()
+        score, tips, grade = self.health_score(memory, disks, scan, battery)
+        key = "success" if score >= 75 else "warning" if score >= 60 else "danger"
+        rows=[self.kv("\u0110i\u1ec3m", self.color(f"{score}/100 - {grade}", key, bold=True)), self.kv("RAM", self.memory_summary(memory)), self.kv("T\u1ec7p t\u1ea1m/cache", human_bytes(scan.bytes_total)), self.kv("Pin", self.battery_summary(battery)), "", self.color("Khuy\u1ebfn ngh\u1ecb:", "accent", bold=True)]
+        rows.extend(f"{i}. {tip}" for i,tip in enumerate(tips,1))
+        self.write_panel("S\u1ee9c Kh\u1ecfe M\u00e1y T\u00ednh", rows)
+
+    def cmd_battery(self, _: list[str]) -> None:
+        battery=self.battery_info()
+        if not battery.present:
+            self.write_panel("Pin Laptop", ["Kh\u00f4ng ph\u00e1t hi\u1ec7n pin; m\u00e1y c\u00f3 th\u1ec3 l\u00e0 PC \u0111\u1ec3 b\u00e0n."])
+            return
+        remain="kh\u00f4ng x\u00e1c \u0111\u1ecbnh" if battery.seconds_remaining is None else f"{battery.seconds_remaining//3600} gi\u1edd {(battery.seconds_remaining%3600)//60} ph\u00fat"
+        rows=[self.kv("M\u1ee9c pin", f"{battery.percent}%"), self.kv("Ngu\u1ed3n", "\u0110ang c\u1eafm s\u1ea1c" if battery.on_ac else "\u0110ang d\u00f9ng pin"), self.kv("Tr\u1ea1ng th\u00e1i", "\u0110ang s\u1ea1c" if battery.charging else "Kh\u00f4ng s\u1ea1c"), self.kv("C\u00f2n l\u1ea1i", remain)]
+        self.write_panel("Pin Laptop", rows)
 
     def cpu_name(self) -> str:
         code, output = run_powershell("(Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)")

@@ -18,6 +18,12 @@ python -m PyInstaller --name pctool --onefile --clean `
     --workpath (Join-Path $root "build\pyinstaller") `
     --specpath (Join-Path $root "build") `
     (Join-Path $root "terminal_ui.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "PyInstaller build failed with exit code $LASTEXITCODE."
+}
+if (-not (Test-Path $exePath)) {
+    throw "Build failed: pctool.exe was not created."
+}
 
 New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 

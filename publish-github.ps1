@@ -2,8 +2,8 @@ $ErrorActionPreference = "Stop"
 
 $RepoOwner = "nghianghichcode"
 $RepoName = "command-lab"
-$ReleaseTag = "v0.5.0"
-$ReleaseTitle = "Nghia PC Toolkit v0.5.0"
+$ReleaseTag = "v0.6.0"
+$ReleaseTitle = "Nghia PC Toolkit v0.6.0"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $zipPath = Join-Path $root "dist\command-lab.zip"
